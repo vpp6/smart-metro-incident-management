@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { Search, ChevronRight, Plus, ArrowUpDown } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { KPICard } from "@/components/KPICard";
@@ -6,6 +6,7 @@ import { PulseDot } from "@/components/PulseDot";
 import { SevBadge, StatusBadge, TypeTag } from "@/components/ui/badge";
 import { SEV_CONFIG, getStationInfo, FONT_SANS, FONT_MONO } from "@/config/constants";
 import { HOURLY_DATA, WEEKLY_DATA } from "@/data/sample";
+import { useDebounce } from "@/lib/useDebounce";
 import type { Incident, IncidentStatus, Severity } from "@/types";
 
 interface DashboardProps {
@@ -18,29 +19,82 @@ interface DashboardProps {
 
 type SortKey = "newest" | "oldest" | "severity";
 
+const IncidentCard = memo(function IncidentCard({ inc, onSelect }: { inc: Incident; onSelect: (id: string) => void }) {
+  return (
+    <div onClick={() => onSelect(inc.id)}
+      className="px-4 py-3 active:bg-white/[0.03] transition-colors cursor-pointer"
+      style={{ borderColor: "rgba(100,140,200,0.05)" }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
+          <span className="font-mono text-[12px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
+          <SevBadge sev={inc.severity} />
+        </div>
+        <StatusBadge status={inc.status} />
+      </div>
+      <div className="flex items-center gap-2 mb-1">
+        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, verticalAlign: "middle" }} />
+        <span className="text-[11px]" style={{ color: "#c9d4e8" }}>{inc.station}</span>
+        <span className="text-[9px] font-mono" style={{ color: "#4a5f78" }}>· {inc.location}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <TypeTag type={inc.incidentType} />
+        <span className="text-[9px] font-mono" style={{ color: "#4a5f78", marginLeft: "auto" }}>{inc.time}</span>
+        <ChevronRight size={11} style={{ color: "#4a5f78" }} />
+      </div>
+    </div>
+  );
+});
+
+const IncidentRow = memo(function IncidentRow({ inc, onSelect }: { inc: Incident; onSelect: (id: string) => void }) {
+  return (
+    <tr className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelect(inc.id)}>
+      <td className="py-2.5 px-3">
+        <div className="flex items-center gap-2">
+          {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
+          <span className="font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
+        </div>
+      </td>
+      <td className="py-2.5 px-3"><TypeTag type={inc.incidentType} /></td>
+      <td className="py-2.5 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
+        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
+        <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
+      </td>
+      <td className="py-2.5 px-3"><SevBadge sev={inc.severity} /></td>
+      <td className="py-2.5 px-3"><StatusBadge status={inc.status} /></td>
+      <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.location}</td>
+      <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.time}</td>
+      <td className="py-2.5 px-3"><ChevronRight size={12} style={{ color: "#4a5f78" }} /></td>
+    </tr>
+  );
+});
+
 export function Dashboard({ incidents, onSelectIncident, onNewIncident, userStation, mobile }: DashboardProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | IncidentStatus>("ALL");
   const [stationFilter, setStationFilter] = useState<"ALL" | string>("ALL");
   const [sortBy, setSortBy] = useState<SortKey>("newest");
+  const debouncedSearch = useDebounce(search, 200);
 
-  const activeIncidents = incidents.filter(i => i.status !== "RESOLVED");
-  const critical = incidents.filter(i => i.status !== "RESOLVED" && i.severity === "CRITICAL");
-  const resolvedToday = incidents.filter(i => i.status === "RESOLVED" && i.date === new Date().toISOString().slice(0, 10));
+  const activeIncidents = useMemo(() => incidents.filter(i => i.status !== "RESOLVED"), [incidents]);
+  const critical = useMemo(() => incidents.filter(i => i.status !== "RESOLVED" && i.severity === "CRITICAL"), [incidents]);
+  const resolvedToday = useMemo(() => incidents.filter(i => i.status === "RESOLVED" && i.date === new Date().toISOString().slice(0, 10)), [incidents]);
 
-  let filtered = incidents.filter(i => {
-    const matchSearch = i.code.includes(search) || i.station.includes(search) || i.description.includes(search);
-    const matchStatus = statusFilter === "ALL" || i.status === statusFilter;
-    const matchStation = stationFilter === "ALL" || i.station === stationFilter;
-    return matchSearch && matchStatus && matchStation;
-  });
-
-  filtered = [...filtered].sort((a, b) => {
-    if (sortBy === "newest") return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
-    if (sortBy === "oldest") return new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime();
-    const sevOrder: Record<Severity, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-    return (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99);
-  });
+  const filtered = useMemo(() => {
+    return [...incidents]
+      .filter(i => {
+        const matchSearch = i.code.includes(debouncedSearch) || i.station.includes(debouncedSearch) || i.description.includes(debouncedSearch);
+        const matchStatus = statusFilter === "ALL" || i.status === statusFilter;
+        const matchStation = stationFilter === "ALL" || i.station === stationFilter;
+        return matchSearch && matchStatus && matchStation;
+      })
+      .sort((a, b) => {
+        if (sortBy === "newest") return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
+        if (sortBy === "oldest") return new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime();
+        const sevOrder: Record<Severity, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        return (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99);
+      });
+  }, [incidents, debouncedSearch, statusFilter, stationFilter, sortBy]);
 
   const statBarData = [
     { label: "Active", count: activeIncidents.length, color: "#f59e0b" },
@@ -190,41 +244,16 @@ export function Dashboard({ incidents, onSelectIncident, onNewIncident, userStat
           </p>
         </div>
 
-        {filtered.length === 0 && (
+        {filtered.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-[11px] font-mono mb-2" style={{ color: "#4a5f78" }}>No incidents found</p>
             {stationFilter !== "ALL" && (
               <button onClick={() => setStationFilter("ALL")} className="text-[10px] font-mono underline" style={{ color: "#f59e0b" }}>Clear filter</button>
             )}
           </div>
-        )}
-
-        {mobile ? (
+        ) : mobile ? (
           <div className="divide-y" style={{ borderColor: "rgba(100,140,200,0.05)" }}>
-            {filtered.map(inc => (
-              <div key={inc.id} onClick={() => onSelectIncident(inc.id)}
-                className="px-4 py-3 active:bg-white/[0.03] transition-colors cursor-pointer"
-                style={{ borderColor: "rgba(100,140,200,0.05)" }}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
-                    <span className="font-mono text-[12px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
-                    <SevBadge sev={inc.severity} />
-                  </div>
-                  <StatusBadge status={inc.status} />
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, verticalAlign: "middle" }} />
-                  <span className="text-[11px]" style={{ color: "#c9d4e8" }}>{inc.station}</span>
-                  <span className="text-[9px] font-mono" style={{ color: "#4a5f78" }}>· {inc.location}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <TypeTag type={inc.incidentType} />
-                  <span className="text-[9px] font-mono" style={{ color: "#4a5f78", marginLeft: "auto" }}>{inc.time}</span>
-                  <ChevronRight size={11} style={{ color: "#4a5f78" }} />
-                </div>
-              </div>
-            ))}
+            {filtered.map(inc => <IncidentCard key={inc.id} inc={inc} onSelect={onSelectIncident} />)}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -237,26 +266,7 @@ export function Dashboard({ incidents, onSelectIncident, onNewIncident, userStat
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(inc => (
-                  <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
-                        {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
-                        <span className="font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3"><TypeTag type={inc.incidentType} /></td>
-                    <td className="py-2.5 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
-                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
-                      <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
-                    </td>
-                    <td className="py-2.5 px-3"><SevBadge sev={inc.severity} /></td>
-                    <td className="py-2.5 px-3"><StatusBadge status={inc.status} /></td>
-                    <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.location}</td>
-                    <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.time}</td>
-                    <td className="py-2.5 px-3"><ChevronRight size={12} style={{ color: "#4a5f78" }} /></td>
-                  </tr>
-                ))}
+                {filtered.map(inc => <IncidentRow key={inc.id} inc={inc} onSelect={onSelectIncident} />)}
               </tbody>
             </table>
           </div>
