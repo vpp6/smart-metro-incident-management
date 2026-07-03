@@ -48,9 +48,21 @@ app.post("/api/seed", async (_req, res) => {
   try {
     await initDatabase();
     await seedStaff();
-    // Verify
     const count = await query("SELECT COUNT(*) FROM staff");
     res.json({ seeded: true, staffCount: parseInt(count.rows[0].count) });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Debug: check SM-001
+app.get("/api/debug/sm001", async (_req, res) => {
+  try {
+    const result = await query("SELECT job_number, SUBSTRING(password_hash, 1, 30) as hash_start, role FROM staff WHERE job_number = 'SM-001'");
+    if (result.rows.length === 0) {
+      return res.json({ found: false });
+    }
+    res.json(result.rows[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
