@@ -43,10 +43,11 @@ app.use("/api/incidents", incidentRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/audit", auditRoutes);
 
-// Force re-seed (admin only — no auth for simplicity)
+// Force re-seed (truncates existing data)
 app.post("/api/seed", async (_req, res) => {
   try {
     await initDatabase();
+    await query("TRUNCATE TABLE staff RESTART IDENTITY CASCADE");
     await seedStaff();
     const count = await query("SELECT COUNT(*) FROM staff");
     res.json({ seeded: true, staffCount: parseInt(count.rows[0].count) });
