@@ -1,4 +1,4 @@
-import { Activity, Plus, FileText } from "lucide-react";
+import { Activity, Plus, FileText, Users } from "lucide-react";
 import type { View } from "@/types";
 
 interface BottomNavProps {
@@ -11,6 +11,7 @@ const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "dashboard",    label: "Dashboard",    icon: <Activity size={20} /> },
   { id: "new-incident", label: "New",          icon: <Plus size={20} /> },
   { id: "reports",      label: "Reports",      icon: <FileText size={20} /> },
+  { id: "staff-management", label: "Staff",    icon: <Users size={20} /> },
 ];
 
 export function BottomNav({ view, setView, activeCount }: BottomNavProps) {

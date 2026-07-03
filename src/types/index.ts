@@ -1,4 +1,13 @@
-export type View = "dashboard" | "new-incident" | "incident-detail" | "reports";
+export type View = "dashboard" | "new-incident" | "incident-detail" | "reports" | "staff-management";
+
+export interface StaffUser {
+  id: string;
+  jobNumber: string;
+  name: string;
+  password: string;
+  role: string;
+  station: string;
+}
 
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type IncidentStatus = "OPEN" | "ACTIVE" | "RESOLVED";

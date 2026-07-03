@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronRight, Radio, LogOut } from "lucide-react";
+import { ChevronRight, Radio, LogOut, Users } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -8,9 +8,12 @@ import { NewIncidentForm } from "@/pages/NewIncidentForm";
 import { IncidentDetail } from "@/pages/IncidentDetail";
 import { Reports } from "@/pages/Reports";
 import { LoginPage } from "@/pages/LoginPage";
+import { StaffManagement } from "@/pages/StaffManagement";
 import { SAMPLE_INCIDENTS } from "@/data/sample";
+import { DEFAULT_STAFF } from "@/data/staff";
 import { FONT_SANS } from "@/config/constants";
-import type { View, Incident } from "@/types";
+import type { View, Incident, StaffUser } from "@/types";
+import type { LoginResult } from "@/pages/LoginPage";
 
 function useMobile() {
   const [mobile, setMobile] = useState(window.innerWidth < 768);
@@ -24,12 +27,13 @@ function useMobile() {
 
 export default function App() {
   const isMobile = useMobile();
-  const [user, setUser] = useState<{ station: string; managerName: string } | null>(null);
+  const [user, setUser] = useState<LoginResult | null>(null);
   const [view, setView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>(SAMPLE_INCIDENTS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
+  const [staffList, setStaffList] = useState<StaffUser[]>(DEFAULT_STAFF);
 
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
@@ -81,10 +85,8 @@ export default function App() {
   }
 
   function handleDeleteIncident(id: string) {
-    if (window.confirm("Are you sure you want to delete this incident?")) {
-      setIncidents(prev => prev.filter(i => i.id !== id));
-      setView("dashboard");
-    }
+    setIncidents(prev => prev.filter(i => i.id !== id));
+    setView("dashboard");
   }
 
   function handleEditIncident(inc: Incident) {
@@ -96,10 +98,11 @@ export default function App() {
   const bottomPad = isMobile ? 72 : 0;
 
   const PAGE_TITLES: Record<View, string> = {
-    "dashboard":       "Dashboard",
-    "new-incident":    editingIncident ? `Edit ${editingIncident.code}` : "New Incident",
-    "incident-detail": selectedIncident?.code || "Incident Details",
-    "reports":         "Reports & Statistics",
+    "dashboard":        "Dashboard",
+    "new-incident":     editingIncident ? `Edit ${editingIncident.code}` : "New Incident",
+    "incident-detail":  selectedIncident?.code || "Incident Details",
+    "reports":          "Reports & Statistics",
+    "staff-management": "Staff Management",
   };
 
   if (!user) return <LoginPage onLogin={setUser} />;
@@ -139,11 +142,19 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono hide-mobile" style={{ color: "#7a8fa8" }}>
-              {user.station} — {user.managerName}
+              {user.jobNumber} · {user.managerName} · {user.station}
             </span>
             <span className="text-[10px] font-mono show-mobile-only" style={{ color: "#7a8fa8" }}>
-              {user.station}
+              {user.jobNumber}
             </span>
+            {view !== "staff-management" && (
+              <button onClick={() => setView("staff-management")}
+                className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
+                style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
+                <Users size={11} />
+                <span className="hide-mobile">Staff</span>
+              </button>
+            )}
             <button onClick={() => setUser(null)}
               className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
               style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
@@ -179,6 +190,13 @@ export default function App() {
             />
           )}
           {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
+          {view === "staff-management" && (
+            <StaffManagement
+              staffList={staffList}
+              onUpdateStaff={setStaffList}
+              onBack={() => setView("dashboard")}
+            />
+          )}
         </div>
       </main>
     </div>
