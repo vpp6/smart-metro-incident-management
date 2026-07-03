@@ -1,7 +1,8 @@
-import { ArrowLeft, Edit3, Trash2, Info, Bell, AlertTriangle, Users, Train, Building2, ClipboardCheck, BarChart3 } from "lucide-react";
+import { ArrowLeft, Edit3, Trash2, Mail, Info, Bell, AlertTriangle, Users, Train, Building2, ClipboardCheck, BarChart3 } from "lucide-react";
 import { SEV_CONFIG, FONT_SANS, FONT_MONO, getStationInfo } from "@/config/constants";
 import { SevBadge, StatusBadge } from "@/components/ui/badge";
 import type { Incident } from "@/types";
+import { emailIncident } from "@/lib/email";
 
 interface Props {
   incident: Incident;
@@ -76,6 +77,11 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
             <Trash2 size={12} /> Delete
           </button>
         )}
+        <button onClick={() => emailIncident(incident)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80 ml-auto"
+          style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", fontFamily: FONT_SANS }}>
+          <Mail size={12} /> Email
+        </button>
       </div>
 
       {/* Grid of sections */}

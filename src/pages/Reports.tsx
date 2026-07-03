@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, BarChart3, FileSpreadsheet, FileText } from "lucide-react";
+import { Download, BarChart3, FileSpreadsheet, FileText, Mail } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { KPICard } from "@/components/KPICard";
 import { SevBadge, StatusBadge, TypeTag } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { TYPE_COLORS, INCIDENT_TYPES, getStationInfo, SEV_CONFIG, FONT_SANS, FON
 import { WEEKLY_DATA } from "@/data/sample";
 import type { Incident, ExtendedIncidentType } from "@/types";
 import { exportToExcel, exportToPDF } from "@/lib/export";
+import { emailReport } from "@/lib/email";
 
 interface ReportsProps {
   incidents: Incident[];
@@ -70,6 +71,11 @@ export function Reports({ incidents, onSelectIncident, mobile }: ReportsProps) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
             style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
             <FileText size={12} /> PDF
+          </button>
+          <button onClick={() => emailReport(incidents)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
+            style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", fontFamily: FONT_SANS }}>
+            <Mail size={12} /> Email
           </button>
         </div>
       </div>
@@ -140,6 +146,11 @@ export function Reports({ incidents, onSelectIncident, mobile }: ReportsProps) {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
                 style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
                 <FileText size={12} /> PDF
+              </button>
+              <button onClick={() => emailReport(filtered)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
+                style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", fontFamily: FONT_SANS }}>
+                <Mail size={12} /> Email
               </button>
             </div>
             <div className="flex items-center gap-1 flex-wrap">
