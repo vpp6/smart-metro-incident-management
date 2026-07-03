@@ -46,15 +46,15 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="relative w-full sm:max-w-xs">
           <Search size={12} style={{ color: "#4a5f78", position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
           <input type="text" placeholder="Search by code, station, description..." value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-7 pr-3 py-1.5 rounded text-[11px] outline-none font-mono"
             style={{ background: "#080e1c", border: "1px solid rgba(100,140,200,0.1)", color: "#c9d4e8" }} />
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {["ALL", "OPEN", "ACTIVE", "RESOLVED"].map(s => (
             <button key={s} onClick={() => setStatusFilter(s as "ALL" | IncidentStatus)}
               className="px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-wider transition-colors"

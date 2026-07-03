@@ -209,19 +209,21 @@ export function NewIncidentForm({ onSubmit }: Props) {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Step pills */}
-      <div className="flex flex-wrap gap-1.5 mb-6 p-2 rounded border" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
-        {STEPS.map((s, i) => (
-          <button key={s.key} onClick={() => setStep(s.key)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] transition-all whitespace-nowrap"
-            style={{
-              background: step === s.key ? "rgba(245,158,11,0.15)" : "transparent",
-              border: step === s.key ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent",
-              color: step === s.key ? "#f59e0b" : "#4a5f78",
-            }}>
-            {s.icon}
-            <span style={{ fontFamily: FONT_SANS, fontSize: 10 }}>{s.label}</span>
-          </button>
-        ))}
+      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 mb-6" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div className="flex gap-1.5 p-2 rounded border min-w-max" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+          {STEPS.map((s, i) => (
+            <button key={s.key} onClick={() => setStep(s.key)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] transition-all whitespace-nowrap"
+              style={{
+                background: step === s.key ? "rgba(245,158,11,0.15)" : "transparent",
+                border: step === s.key ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent",
+                color: step === s.key ? "#f59e0b" : "#4a5f78",
+              }}>
+              {s.icon}
+              <span style={{ fontFamily: FONT_SANS, fontSize: 10 }}>{s.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Progress bar */}

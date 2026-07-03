@@ -1,4 +1,4 @@
-import { Activity, Plus, FileText, Train } from "lucide-react";
+import { Activity, Plus, FileText, Train, X } from "lucide-react";
 import { PulseDot } from "@/components/PulseDot";
 import { STAFF_POOL, FONT_SANS } from "@/config/constants";
 import type { View, Incident } from "@/types";
@@ -8,9 +8,11 @@ interface SidebarProps {
   setView: (v: View) => void;
   incidents: Incident[];
   open: boolean;
+  onClose?: () => void;
+  mobile?: boolean;
 }
 
-export function Sidebar({ view, setView, incidents, open }: SidebarProps) {
+export function Sidebar({ view, setView, incidents, open, onClose, mobile }: SidebarProps) {
   const active = incidents.filter(i => i.status !== "RESOLVED").length;
   const critical = incidents.filter(i => i.severity === "CRITICAL" && i.status !== "RESOLVED").length;
 
@@ -22,17 +24,37 @@ export function Sidebar({ view, setView, incidents, open }: SidebarProps) {
 
   const onDutyStaff = STAFF_POOL.slice(0, 6);
 
+  function handleNav(id: View) {
+    setView(id);
+    if (mobile && onClose) onClose();
+  }
+
   return (
-    <aside
-      className="fixed left-0 top-0 h-full z-40 flex flex-col border-r transition-all duration-300"
-      style={{
-        width: open ? 220 : 0,
-        overflow: "hidden",
-        background: "#04080f",
-        borderColor: "rgba(100,140,200,0.1)",
-        minWidth: open ? 220 : 0,
-      }}
-    >
+    <>
+      {mobile && open && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 z-30"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+        />
+      )}
+      <aside
+        className="fixed left-0 top-0 h-full z-40 flex flex-col border-r transition-all duration-300"
+        style={{
+          width: open ? 220 : 0,
+          overflow: "hidden",
+          background: "#04080f",
+          borderColor: "rgba(100,140,200,0.1)",
+          minWidth: open ? 220 : 0,
+        }}
+      >
+        {mobile && open && (
+          <div className="absolute top-3 right-3 z-50">
+            <button onClick={onClose} className="p-1 rounded hover:bg-white/5" style={{ color: "#4a5f78" }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
       <div className="px-4 py-4 border-b flex items-center gap-3" style={{ borderColor: "rgba(100,140,200,0.1)" }}>
         <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,158,11,0.15)" }}>
           <Train size={14} style={{ color: "#f59e0b" }} />
@@ -54,7 +76,7 @@ export function Sidebar({ view, setView, incidents, open }: SidebarProps) {
         {navItems.map(item => (
           <button
             key={item.id}
-            onClick={() => setView(item.id)}
+            onClick={() => handleNav(item.id)}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded text-left transition-all hover:bg-white/5"
             style={{
               background: view === item.id ? "rgba(245,158,11,0.1)" : "transparent",
@@ -92,5 +114,6 @@ export function Sidebar({ view, setView, incidents, open }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

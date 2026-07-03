@@ -41,8 +41,8 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
       </div>
 
       {/* Section toggle + export */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           {[
             { key: "kpi", label: "KPI Dashboard", icon: <BarChart3 size={12} /> },
             { key: "detailed", label: "Detailed Report", icon: <Download size={12} /> },
@@ -59,7 +59,7 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => exportToExcel(incidents, `Incident_Report_${new Date().toISOString().slice(0, 10)}.xlsx`)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
             style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: FONT_SANS }}>

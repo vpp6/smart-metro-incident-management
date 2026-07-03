@@ -7,9 +7,10 @@ interface TopBarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (v: boolean) => void;
   incidents: Incident[];
+  mobile?: boolean;
 }
 
-export function TopBar({ sidebarOpen, setSidebarOpen, incidents }: TopBarProps) {
+export function TopBar({ sidebarOpen, setSidebarOpen, incidents, mobile }: TopBarProps) {
   const [tick, setTick] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setTick(new Date()), 1000); return () => clearInterval(t); }, []);
 
@@ -18,12 +19,14 @@ export function TopBar({ sidebarOpen, setSidebarOpen, incidents }: TopBarProps) 
   return (
     <header className="fixed top-0 left-0 z-30 flex items-center justify-between px-4 h-11 border-b" style={{
       background: "rgba(4,8,15,0.97)", borderColor: "rgba(100,140,200,0.1)",
-      left: sidebarOpen ? 220 : 0, right: 0, backdropFilter: "blur(8px)",
+      left: !mobile && sidebarOpen ? 220 : 0, right: 0, backdropFilter: "blur(8px)",
     }}>
       <div className="flex items-center gap-3">
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded hover:bg-white/5 transition-colors" style={{ color: "#4a5f78" }}>
-          <Menu size={15} />
-        </button>
+        {!mobile && (
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded hover:bg-white/5 transition-colors" style={{ color: "#4a5f78" }}>
+            <Menu size={15} />
+          </button>
+        )}
         <div className="hidden sm:flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <PulseDot color="#10b981" />
