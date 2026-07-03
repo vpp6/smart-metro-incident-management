@@ -27,7 +27,7 @@ export async function seedStaff() {
 
   // Station managers for all stations
   for (let i = 0; i < stations.length; i++) {
-    const num = String(i + 1).padStart(2, "0");
+    const num = String(i + 1).padStart(3, "0");
     await query(
       "INSERT INTO staff (job_number, name, password_hash, role, station) VALUES ($1, $2, $3, $4, $5)",
       [`SM-${num}`, `Station Manager ${num}`, passwords[0], "Station Manager", stations[i]]
