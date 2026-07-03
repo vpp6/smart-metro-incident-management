@@ -56,14 +56,11 @@ app.post("/api/seed", async (_req, res) => {
   }
 });
 
-// Debug: check SM-001
-app.get("/api/debug/sm001", async (_req, res) => {
+// Debug: check staff
+app.get("/api/debug/staff", async (_req, res) => {
   try {
-    const result = await query("SELECT job_number, SUBSTRING(password_hash, 1, 30) as hash_start, role FROM staff WHERE job_number = 'SM-001'");
-    if (result.rows.length === 0) {
-      return res.json({ found: false });
-    }
-    res.json(result.rows[0]);
+    const result = await query("SELECT job_number, role FROM staff ORDER BY job_number LIMIT 10");
+    res.json(result.rows);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
