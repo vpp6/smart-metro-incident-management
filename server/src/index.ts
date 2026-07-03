@@ -56,16 +56,6 @@ app.post("/api/seed", async (_req, res) => {
   }
 });
 
-// Debug: check staff
-app.get("/api/debug/staff", async (_req, res) => {
-  try {
-    const result = await query("SELECT job_number, role FROM staff ORDER BY job_number LIMIT 10");
-    res.json(result.rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
