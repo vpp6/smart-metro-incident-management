@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, BarChart3, TrendingUp, Clock, AlertTriangle, FileSpreadsheet, FileText } from "lucide-react";
+import { Download, BarChart3, FileSpreadsheet, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { KPICard } from "@/components/KPICard";
 import { SevBadge, StatusBadge, TypeTag } from "@/components/ui/badge";
@@ -11,9 +11,10 @@ import { exportToExcel, exportToPDF } from "@/lib/export";
 interface ReportsProps {
   incidents: Incident[];
   onSelectIncident: (id: string) => void;
+  mobile?: boolean;
 }
 
-export function Reports({ incidents, onSelectIncident }: ReportsProps) {
+export function Reports({ incidents, onSelectIncident, mobile }: ReportsProps) {
   const [typeFilter, setTypeFilter] = useState<"ALL"|ExtendedIncidentType>("ALL");
   const [section, setSection] = useState<"kpi"|"detailed">("kpi");
 
@@ -31,13 +32,13 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
   })).filter(b => b.count > 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard label="Total Incidents" value={String(incidents.length)} sub="All recorded incidents" color="#06b6d4" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <KPICard label="Total Incidents" value={String(incidents.length)} sub="All recorded" color="#06b6d4" />
         <KPICard label="Closure Rate" value={`${incidents.length ? Math.round((resolved.length / incidents.length) * 100) : 0}%`} sub={`${resolved.length} closed`} color="#10b981" />
         <KPICard label="Total Injuries" value={String(totalInjuries)} sub={`${totalFatalities} fatalities`} color={totalInjuries > 0 ? "#ef4444" : "#10b981"} />
-        <KPICard label="Train Delays" value={String(totalDelays)} unit="min" sub={`Avg ${avgDuration} min/incident`} color="#f59e0b" />
+        <KPICard label="Train Delays" value={String(totalDelays)} unit="min" sub={`Avg ${avgDuration} min`} color="#f59e0b" />
       </div>
 
       {/* Section toggle + export */}
@@ -60,12 +61,12 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
           ))}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => exportToExcel(incidents, `Incident_Report_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+          <button onClick={() => exportToExcel(incidents, `Report_${new Date().toISOString().slice(0, 10)}.xlsx`)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
             style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: FONT_SANS }}>
             <FileSpreadsheet size={12} /> Excel
           </button>
-          <button onClick={() => exportToPDF(incidents, `Incident_Report_${new Date().toISOString().slice(0, 10)}.pdf`)}
+          <button onClick={() => exportToPDF(incidents, `Report_${new Date().toISOString().slice(0, 10)}.pdf`)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
             style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
             <FileText size={12} /> PDF
@@ -75,7 +76,6 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
 
       {section === "kpi" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Severity distribution */}
           <div className="rounded border p-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
             <p className="text-[9px] font-mono uppercase tracking-widest mb-4" style={{ color: "#4a5f78" }}>Severity Distribution</p>
             <div className="space-y-3">
@@ -86,9 +86,7 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
                   <div key={s}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-mono text-[10px]" style={{ color }}>{count}</span>
-                      <span className="text-[10px]" style={{ color: "#7a8fa8", fontFamily: FONT_SANS }}>
-                        {SEV_CONFIG[s].label}
-                      </span>
+                      <span className="text-[10px]" style={{ color: "#7a8fa8", fontFamily: FONT_SANS }}>{SEV_CONFIG[s].label}</span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(100,140,200,0.08)" }}>
                       <div className="h-full rounded-full" style={{ width: `${(count / incidents.length) * 100}%`, background: color }} />
@@ -98,8 +96,6 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
               })}
             </div>
           </div>
-
-          {/* By type */}
           <div className="rounded border p-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
             <p className="text-[9px] font-mono uppercase tracking-widest mb-4" style={{ color: "#4a5f78" }}>Type Distribution</p>
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -116,8 +112,6 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
               ))}
             </div>
           </div>
-
-          {/* Weekly chart */}
           <div className="rounded border p-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
             <p className="text-[9px] font-mono uppercase tracking-widest mb-3" style={{ color: "#4a5f78" }}>Weekly — Incidents / Resolved</p>
             <ResponsiveContainer width="100%" height={140}>
@@ -135,14 +129,14 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
 
       {section === "detailed" && (
         <div className="rounded border" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
-          <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-3 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
             <div className="flex items-center gap-2">
-              <button onClick={() => exportToExcel(filtered, `Detailed_Report_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+              <button onClick={() => exportToExcel(filtered, `Detailed_${new Date().toISOString().slice(0, 10)}.xlsx`)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
                 style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", fontFamily: FONT_SANS }}>
                 <FileSpreadsheet size={12} /> Excel
               </button>
-              <button onClick={() => exportToPDF(filtered, `Detailed_Report_${new Date().toISOString().slice(0, 10)}.pdf`)}
+              <button onClick={() => exportToPDF(filtered, `Detailed_${new Date().toISOString().slice(0, 10)}.pdf`)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
                 style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
                 <FileText size={12} /> PDF
@@ -159,35 +153,64 @@ export function Reports({ incidents, onSelectIncident }: ReportsProps) {
               ))}
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(100,140,200,0.08)" }}>
-                  {["Code", "Type", "Station", "Severity", "Status", "Date", "Injuries", "Fatalities", "Delay"].map((h, i) => (
-                    <th key={i} className="py-2 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(inc => (
-                  <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
-                    <td className="py-2 px-3 font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</td>
-                    <td className="py-2 px-3"><TypeTag type={inc.incidentType} /></td>
-                    <td className="py-2 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
-                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
-                      <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
-                    </td>
-                    <td className="py-2 px-3"><SevBadge sev={inc.severity} /></td>
-                    <td className="py-2 px-3"><StatusBadge status={inc.status} /></td>
-                    <td className="py-2 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.date}</td>
-                    <td className="py-2 px-3 text-[10px] font-mono" style={{ color: (inc.impact?.injuries || 0) > 0 ? "#ef4444" : "#4a5f78" }}>{inc.impact?.injuries || 0}</td>
-                    <td className="py-2 px-3 text-[10px] font-mono" style={{ color: (inc.impact?.fatalities || 0) > 0 ? "#ef4444" : "#4a5f78" }}>{inc.impact?.fatalities || 0}</td>
-                    <td className="py-2 px-3 text-[10px] font-mono" style={{ color: "#f59e0b" }}>{inc.impact?.trainDelay ? `${inc.impact.trainDelay} min` : "—"}</td>
+          {mobile ? (
+            <div className="divide-y" style={{ borderColor: "rgba(100,140,200,0.05)" }}>
+              {filtered.length === 0 && (
+                <div className="py-8 text-center text-[11px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</div>
+              )}
+              {filtered.map(inc => (
+                <div key={inc.id} onClick={() => onSelectIncident(inc.id)}
+                  className="px-4 py-3 active:bg-white/[0.03] transition-colors cursor-pointer"
+                  style={{ borderColor: "rgba(100,140,200,0.05)" }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-mono text-[12px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
+                    <SevBadge sev={inc.severity} />
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TypeTag type={inc.incidentType} />
+                    <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, verticalAlign: "middle" }} />
+                    <span className="text-[11px]" style={{ color: "#c9d4e8" }}>{inc.station}</span>
+                    <span className="text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.date}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>
+                    <span style={{ color: (inc.impact?.injuries || 0) > 0 ? "#ef4444" : "#4a5f78" }}>Inj: {inc.impact?.injuries || 0}</span>
+                    <span style={{ color: (inc.impact?.fatalities || 0) > 0 ? "#ef4444" : "#4a5f78" }}>Fat: {inc.impact?.fatalities || 0}</span>
+                    <span style={{ color: "#f59e0b" }}>Delay: {inc.impact?.trainDelay ? `${inc.impact.trainDelay}m` : "—"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(100,140,200,0.08)" }}>
+                    {["Code", "Type", "Station", "Severity", "Status", "Date", "Injuries", "Fatalities", "Delay"].map((h, i) => (
+                      <th key={i} className="py-2 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map(inc => (
+                    <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
+                      <td className="py-2 px-3 font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</td>
+                      <td className="py-2 px-3"><TypeTag type={inc.incidentType} /></td>
+                      <td className="py-2 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
+                        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
+                        <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
+                      </td>
+                      <td className="py-2 px-3"><SevBadge sev={inc.severity} /></td>
+                      <td className="py-2 px-3"><StatusBadge status={inc.status} /></td>
+                      <td className="py-2 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.date}</td>
+                      <td className="py-2 px-3 text-[10px] font-mono" style={{ color: (inc.impact?.injuries || 0) > 0 ? "#ef4444" : "#4a5f78" }}>{inc.impact?.injuries || 0}</td>
+                      <td className="py-2 px-3 text-[10px] font-mono" style={{ color: (inc.impact?.fatalities || 0) > 0 ? "#ef4444" : "#4a5f78" }}>{inc.impact?.fatalities || 0}</td>
+                      <td className="py-2 px-3 text-[10px] font-mono" style={{ color: "#f59e0b" }}>{inc.impact?.trainDelay ? `${inc.impact.trainDelay} min` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

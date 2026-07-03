@@ -12,9 +12,10 @@ import type { Incident, IncidentStatus } from "@/types";
 interface DashboardProps {
   incidents: Incident[];
   onSelectIncident: (id: string) => void;
+  mobile?: boolean;
 }
 
-export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
+export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | IncidentStatus>("ALL");
 
@@ -36,9 +37,9 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <KPICard label="Active Incidents" value={String(activeIncidents.length)} sub={`${critical.length} critical`} color="#f59e0b" />
         <KPICard label="Critical" value={String(critical.length)} sub="requires immediate action" color="#ef4444" />
         <KPICard label="Resolved Today" value={String(resolvedToday.length)} sub="closed incidents" color="#10b981" />
@@ -49,15 +50,15 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="relative w-full sm:max-w-xs">
           <Search size={12} style={{ color: "#4a5f78", position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
-          <input type="text" placeholder="Search by code, station, description..." value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-7 pr-3 py-1.5 rounded text-[11px] outline-none font-mono"
+          <input type="text" placeholder="Search..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-7 pr-3 py-2 sm:py-1.5 rounded text-[12px] sm:text-[11px] outline-none font-mono"
             style={{ background: "#080e1c", border: "1px solid rgba(100,140,200,0.1)", color: "#c9d4e8" }} />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {["ALL", "OPEN", "ACTIVE", "RESOLVED"].map(s => (
             <button key={s} onClick={() => setStatusFilter(s as "ALL" | IncidentStatus)}
-              className="px-2.5 py-1 rounded text-[9px] font-mono uppercase tracking-wider transition-colors"
+              className="px-3 sm:px-2.5 py-1.5 sm:py-1 rounded text-[10px] font-mono uppercase tracking-wider transition-colors"
               style={{
                 background: statusFilter === s ? "rgba(245,158,11,0.12)" : "transparent",
                 color: statusFilter === s ? "#f59e0b" : "#4a5f78",
@@ -71,7 +72,6 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Hourly activity chart */}
         <div className="rounded border p-4 col-span-2" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
           <p className="text-[9px] font-mono uppercase tracking-widest mb-3" style={{ color: "#4a5f78" }}>Hourly Activity</p>
           <ResponsiveContainer width="100%" height={130}>
@@ -89,8 +89,6 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Status bar chart */}
         <div className="rounded border p-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
           <p className="text-[9px] font-mono uppercase tracking-widest mb-3" style={{ color: "#4a5f78" }}>Incident Status</p>
           <div className="flex flex-col gap-3 justify-center h-[130px]">
@@ -117,53 +115,86 @@ export function Dashboard({ incidents, onSelectIncident }: DashboardProps) {
             <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#4a5f78", fontFamily: FONT_SANS }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 9, fill: "#4a5f78", fontFamily: FONT_MONO }} tickLine={false} axisLine={false} />
             <Tooltip contentStyle={{ background: "#0c1428", border: "1px solid rgba(100,140,200,0.15)", borderRadius: 4, fontSize: 10, fontFamily: FONT_MONO }} />
-            <Bar dataKey="incidents" name="Incidents" fill="#f59e0b" opacity={0.7} radius={[2, 2, 0, 0]} />
-            <Bar dataKey="resolved" name="Resolved" fill="#10b981" opacity={0.8} radius={[2, 2, 0, 0]} />
+            <Bar dataKey="incidents" name="Incidents" fill="#f59e0b" opacity={0.7} radius={[2,2,0,0]} />
+            <Bar dataKey="resolved"  name="Resolved"  fill="#10b981" opacity={0.8} radius={[2,2,0,0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Active incidents table */}
+      {/* All Incidents - Cards on mobile, Table on desktop */}
       <div className="rounded border overflow-hidden" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
         <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
           <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>All Incidents</p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(100,140,200,0.08)" }}>
-                {["Code", "Type", "Station", "Severity", "Status", "Location", "Time", ""].map((h, i) => (
-                  <th key={i} className="py-2.5 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={8} className="py-8 text-center text-[10px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</td></tr>
-              )}
-              {filtered.map(inc => (
-                <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
-                      {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
-                      <span className="font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3"><TypeTag type={inc.incidentType} /></td>
-                  <td className="py-2.5 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
-                    <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
-                    <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
-                  </td>
-                  <td className="py-2.5 px-3"><SevBadge sev={inc.severity} /></td>
-                  <td className="py-2.5 px-3"><StatusBadge status={inc.status} /></td>
-                  <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.location}</td>
-                  <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.time}</td>
-                  <td className="py-2.5 px-3"><ChevronRight size={12} style={{ color: "#4a5f78" }} /></td>
+
+        {mobile ? (
+          <div className="divide-y" style={{ borderColor: "rgba(100,140,200,0.05)" }}>
+            {filtered.length === 0 && (
+              <div className="py-8 text-center text-[11px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</div>
+            )}
+            {filtered.map(inc => (
+              <div key={inc.id} onClick={() => onSelectIncident(inc.id)}
+                className="px-4 py-3 active:bg-white/[0.03] transition-colors cursor-pointer"
+                style={{ borderColor: "rgba(100,140,200,0.05)" }}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
+                    <span className="font-mono text-[12px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
+                    <SevBadge sev={inc.severity} />
+                  </div>
+                  <StatusBadge status={inc.status} />
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 2, verticalAlign: "middle" }} />
+                  <span className="text-[11px]" style={{ color: "#c9d4e8" }}>{inc.station}</span>
+                  <span className="text-[9px] font-mono" style={{ color: "#4a5f78" }}>· {inc.location}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <TypeTag type={inc.incidentType} />
+                  <span className="text-[9px] font-mono" style={{ color: "#4a5f78", marginLeft: "auto" }}>{inc.time}</span>
+                  <ChevronRight size={11} style={{ color: "#4a5f78" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(100,140,200,0.08)" }}>
+                  {["Code", "Type", "Station", "Severity", "Status", "Location", "Time", ""].map((h, i) => (
+                    <th key={i} className="py-2.5 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr><td colSpan={8} className="py-8 text-center text-[10px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</td></tr>
+                )}
+                {filtered.map(inc => (
+                  <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        {inc.status === "ACTIVE" && <PulseDot color={SEV_CONFIG[inc.severity].color} />}
+                        <span className="font-mono text-[11px]" style={{ color: "#7a8fa8" }}>{inc.code}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3"><TypeTag type={inc.incidentType} /></td>
+                    <td className="py-2.5 px-3 text-[11px]" style={{ fontFamily: FONT_SANS }}>
+                      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 5, verticalAlign: "middle" }} />
+                      <span style={{ color: "#c9d4e8" }}>{inc.station}</span>
+                    </td>
+                    <td className="py-2.5 px-3"><SevBadge sev={inc.severity} /></td>
+                    <td className="py-2.5 px-3"><StatusBadge status={inc.status} /></td>
+                    <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.location}</td>
+                    <td className="py-2.5 px-3 text-[10px] font-mono" style={{ color: "#4a5f78" }}>{inc.time}</td>
+                    <td className="py-2.5 px-3"><ChevronRight size={12} style={{ color: "#4a5f78" }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

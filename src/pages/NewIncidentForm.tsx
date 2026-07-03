@@ -420,23 +420,23 @@ export function NewIncidentForm({ onSubmit }: Props) {
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-6">
+      <div className="flex items-center justify-between mt-6 gap-3">
         <button onClick={() => { const idx = STEPS.findIndex(s => s.key === step); if (idx > 0) setStep(STEPS[idx - 1].key); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded text-[11px] transition-colors disabled:opacity-30"
+          className="flex items-center gap-1.5 px-4 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors disabled:opacity-30"
           style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.15)", color: "#7a8fa8" }}
           disabled={stepIndex === 0}>
-          <ChevronLeft size={13} /> Back
+          <ChevronLeft size={14} /> Back
         </button>
 
         {stepIndex < totalSteps - 1 ? (
           <button onClick={() => setStep(STEPS[stepIndex + 1].key)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded text-[11px] transition-colors"
+            className="flex items-center gap-1.5 px-5 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors"
             style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b" }}>
             Next
           </button>
         ) : (
           <button onClick={handleSubmit}
-            className="flex items-center gap-1.5 px-5 py-2 rounded text-[11px] transition-colors"
+            className="flex items-center gap-1.5 px-5 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors"
             style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981" }}>
             Submit Report
           </button>
@@ -461,8 +461,8 @@ function Field({ label, value, onChange, type }: {
     <div>
       <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "#4a5f78" }}>{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-2.5 py-2 rounded text-[12px] outline-none"
-        style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left" }} />
+          className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none"
+          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }} />
     </div>
   );
 }
@@ -478,8 +478,8 @@ function Select({ label, value, onChange, options, colorMap }: {
         {label}
       </label>
       <select value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-2.5 py-2 rounded text-[12px] outline-none"
-        style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left" }}>
+          className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none"
+          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }}>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
@@ -493,8 +493,8 @@ function TextArea({ label, value, onChange, rows }: {
     <div>
       <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "#4a5f78" }}>{label}</label>
       <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
-        className="w-full px-2.5 py-2 rounded text-[12px] outline-none resize-none"
-        style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left" }} />
+          className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none resize-none"
+          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left" }} />
     </div>
   );
 }

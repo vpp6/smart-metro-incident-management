@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronRight, Radio, LogOut, Menu } from "lucide-react";
+import { Plus, ChevronRight, Radio, LogOut } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { Dashboard } from "@/pages/Dashboard";
 import { NewIncidentForm } from "@/pages/NewIncidentForm";
 import { IncidentDetail } from "@/pages/IncidentDetail";
@@ -25,7 +26,7 @@ export default function App() {
   const isMobile = useMobile();
   const [user, setUser] = useState<{ station: string; managerName: string } | null>(null);
   const [view, setView] = useState<View>("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>(SAMPLE_INCIDENTS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -34,11 +35,11 @@ export default function App() {
   }, [isMobile]);
 
   const selectedIncident = incidents.find(i => i.id === selectedId) || null;
+  const activeCount = incidents.filter(i => i.status !== "RESOLVED").length;
 
   function handleSelectIncident(id: string) {
     setSelectedId(id);
     setView("incident-detail");
-    if (isMobile) setSidebarOpen(false);
   }
 
   function handleNewIncident(partial: Partial<Incident>) {
@@ -73,6 +74,7 @@ export default function App() {
   }
 
   const mainOffset = !isMobile && sidebarOpen ? 220 : 0;
+  const bottomPad = isMobile ? 72 : 0;
 
   const PAGE_TITLES: Record<View, string> = {
     "dashboard":       "Dashboard",
@@ -93,59 +95,51 @@ export default function App() {
         * { scrollbar-width: thin; scrollbar-color: rgba(100,140,200,0.15) transparent; }
         @media (max-width: 767px) {
           .hide-mobile { display: none !important; }
-          .stack-mobile { grid-template-columns: 1fr !important; }
-          .wrap-mobile { flex-wrap: wrap !important; }
-          .full-mobile { width: 100% !important; max-width: 100% !important; }
+          .card-mobile { border-radius: 8px; padding: 12px; }
           .overflow-mobile { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+        }
+        @media (min-width: 768px) {
+          .show-mobile-only { display: none !important; }
         }
       `}</style>
 
-      <Sidebar view={view} setView={v => { setView(v); setSelectedId(null); if (isMobile) setSidebarOpen(false); }} incidents={incidents} open={sidebarOpen} onClose={() => setSidebarOpen(false)} mobile={isMobile} />
+      <Sidebar view={view} setView={v => { setView(v); setSelectedId(null); }} incidents={incidents} open={!isMobile && sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {isMobile && (
+        <BottomNav view={view} setView={v => { setView(v); setSelectedId(null); }} activeCount={activeCount} />
+      )}
+
       <TopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} incidents={incidents} mobile={isMobile} />
 
-      <main className="transition-all duration-300 pt-11" style={{ marginLeft: mainOffset }}>
-        <div className="sticky top-11 z-20 px-3 sm:px-5 py-3 border-b flex items-center justify-between" style={{ background: "rgba(4,8,15,0.95)", borderColor: "rgba(100,140,200,0.08)", backdropFilter: "blur(8px)" }}>
+      <main className="transition-all duration-300" style={{ marginLeft: mainOffset, paddingTop: 44, paddingBottom: bottomPad }}>
+        <div className="sticky top-0 z-20 px-3 sm:px-5 py-2.5 border-b flex items-center justify-between" style={{ background: "rgba(4,8,15,0.95)", borderColor: "rgba(100,140,200,0.08)", backdropFilter: "blur(8px)" }}>
           <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "#4a5f78" }}>
-            {isMobile && (
-              <button onClick={() => setSidebarOpen(true)} className="p-1 mr-1 rounded hover:bg-white/5" style={{ color: "#4a5f78" }}>
-                <Menu size={14} />
-              </button>
-            )}
             <Radio size={11} style={{ color: "#10b981" }} />
             <span className="hide-mobile">Incident Management System</span>
             <ChevronRight size={11} className="hide-mobile" />
             <span style={{ color: "#c9d4e8" }}>{PAGE_TITLES[view]}</span>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "#4a5f78" }}>
-            <Radio size={11} style={{ color: "#10b981" }} />
-            <span>Incident Management System</span>
-            <ChevronRight size={11} />
-            <span style={{ color: "#c9d4e8" }}>{PAGE_TITLES[view]}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono" style={{ color: "#7a8fa8" }}>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono hide-mobile" style={{ color: "#7a8fa8" }}>
               {user.station} — {user.managerName}
             </span>
+            <span className="text-[10px] font-mono show-mobile-only" style={{ color: "#7a8fa8" }}>
+              {user.station}
+            </span>
             <button onClick={() => setUser(null)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all hover:opacity-80"
+              className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
               style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
-              <LogOut size={11} /> Logout
+              <LogOut size={11} />
+              <span className="hide-mobile">Logout</span>
             </button>
-            {view === "dashboard" && (
-              <button onClick={() => setView("new-incident")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium transition-all hover:opacity-90"
-                style={{ background: "#f59e0b", color: "#04080f" }}>
-                <Plus size={12} /> New Incident
-              </button>
-            )}
           </div>
         </div>
 
-        <div className="p-3 sm:p-5">
-          {view === "dashboard" && <Dashboard incidents={incidents} onSelectIncident={handleSelectIncident} />}
+        <div className="p-3 sm:p-5" style={{ paddingBottom: isMobile ? 80 : 20 }}>
+          {view === "dashboard" && <Dashboard incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
           {view === "new-incident" && <NewIncidentForm onSubmit={handleNewIncident} />}
           {view === "incident-detail" && selectedIncident && <IncidentDetail incident={selectedIncident} onBack={() => setView("dashboard")} />}
-          {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} />}
+          {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
         </div>
       </main>
     </div>
