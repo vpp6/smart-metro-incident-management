@@ -29,6 +29,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>(SAMPLE_INCIDENTS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
 
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
@@ -73,12 +74,30 @@ export default function App() {
     }, 800);
   }
 
+  function handleUpdateIncident(id: string, data: Partial<Incident>) {
+    setIncidents(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+    setEditingIncident(null);
+    setView("incident-detail");
+  }
+
+  function handleDeleteIncident(id: string) {
+    if (window.confirm("Are you sure you want to delete this incident?")) {
+      setIncidents(prev => prev.filter(i => i.id !== id));
+      setView("dashboard");
+    }
+  }
+
+  function handleEditIncident(inc: Incident) {
+    setEditingIncident(inc);
+    setView("new-incident");
+  }
+
   const mainOffset = !isMobile && sidebarOpen ? 220 : 0;
   const bottomPad = isMobile ? 72 : 0;
 
   const PAGE_TITLES: Record<View, string> = {
     "dashboard":       "Dashboard",
-    "new-incident":    "New Incident",
+    "new-incident":    editingIncident ? `Edit ${editingIncident.code}` : "New Incident",
     "incident-detail": selectedIncident?.code || "Incident Details",
     "reports":         "Reports & Statistics",
   };
@@ -95,18 +114,17 @@ export default function App() {
         * { scrollbar-width: thin; scrollbar-color: rgba(100,140,200,0.15) transparent; }
         @media (max-width: 767px) {
           .hide-mobile { display: none !important; }
-          .card-mobile { border-radius: 8px; padding: 12px; }
-          .overflow-mobile { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+          .show-mobile-only { display: inline !important; }
         }
         @media (min-width: 768px) {
           .show-mobile-only { display: none !important; }
         }
       `}</style>
 
-      <Sidebar view={view} setView={v => { setView(v); setSelectedId(null); }} incidents={incidents} open={!isMobile && sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar view={view} setView={v => { setView(v); setSelectedId(null); setEditingIncident(null); }} incidents={incidents} open={!isMobile && sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {isMobile && (
-        <BottomNav view={view} setView={v => { setView(v); setSelectedId(null); }} activeCount={activeCount} />
+        <BottomNav view={view} setView={v => { setView(v); setSelectedId(null); setEditingIncident(null); }} activeCount={activeCount} />
       )}
 
       <TopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} incidents={incidents} mobile={isMobile} />
@@ -136,9 +154,30 @@ export default function App() {
         </div>
 
         <div className="p-3 sm:p-5" style={{ paddingBottom: isMobile ? 80 : 20 }}>
-          {view === "dashboard" && <Dashboard incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
-          {view === "new-incident" && <NewIncidentForm onSubmit={handleNewIncident} />}
-          {view === "incident-detail" && selectedIncident && <IncidentDetail incident={selectedIncident} onBack={() => setView("dashboard")} />}
+          {view === "dashboard" && (
+            <Dashboard
+              incidents={incidents}
+              onSelectIncident={handleSelectIncident}
+              onNewIncident={() => setView("new-incident")}
+              userStation={user.station}
+              mobile={isMobile}
+            />
+          )}
+          {view === "new-incident" && (
+            <NewIncidentForm
+              onSubmit={handleNewIncident}
+              onUpdate={handleUpdateIncident}
+              editIncident={editingIncident}
+            />
+          )}
+          {view === "incident-detail" && selectedIncident && (
+            <IncidentDetail
+              incident={selectedIncident}
+              onBack={() => { setView("dashboard"); setSelectedId(null); }}
+              onEdit={() => handleEditIncident(selectedIncident)}
+              onDelete={() => handleDeleteIncident(selectedIncident.id)}
+            />
+          )}
           {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
         </div>
       </main>

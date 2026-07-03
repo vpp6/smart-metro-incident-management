@@ -1,32 +1,45 @@
 import { useState } from "react";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, Plus, ArrowUpDown } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { KPICard } from "@/components/KPICard";
 import { PulseDot } from "@/components/PulseDot";
 import { SevBadge, StatusBadge, TypeTag } from "@/components/ui/badge";
-import { timeAgo } from "@/lib/utils";
 import { SEV_CONFIG, getStationInfo, FONT_SANS, FONT_MONO } from "@/config/constants";
 import { HOURLY_DATA, WEEKLY_DATA } from "@/data/sample";
-import type { Incident, IncidentStatus } from "@/types";
+import type { Incident, IncidentStatus, Severity } from "@/types";
 
 interface DashboardProps {
   incidents: Incident[];
   onSelectIncident: (id: string) => void;
+  onNewIncident: () => void;
+  userStation: string;
   mobile?: boolean;
 }
 
-export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProps) {
+type SortKey = "newest" | "oldest" | "severity";
+
+export function Dashboard({ incidents, onSelectIncident, onNewIncident, userStation, mobile }: DashboardProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | IncidentStatus>("ALL");
+  const [stationFilter, setStationFilter] = useState<"ALL" | string>("ALL");
+  const [sortBy, setSortBy] = useState<SortKey>("newest");
 
   const activeIncidents = incidents.filter(i => i.status !== "RESOLVED");
   const critical = incidents.filter(i => i.status !== "RESOLVED" && i.severity === "CRITICAL");
   const resolvedToday = incidents.filter(i => i.status === "RESOLVED" && i.date === new Date().toISOString().slice(0, 10));
 
-  const filtered = incidents.filter(i => {
+  let filtered = incidents.filter(i => {
     const matchSearch = i.code.includes(search) || i.station.includes(search) || i.description.includes(search);
     const matchStatus = statusFilter === "ALL" || i.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchStation = stationFilter === "ALL" || i.station === stationFilter;
+    return matchSearch && matchStatus && matchStation;
+  });
+
+  filtered = [...filtered].sort((a, b) => {
+    if (sortBy === "newest") return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
+    if (sortBy === "oldest") return new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime();
+    const sevOrder: Record<Severity, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+    return (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99);
   });
 
   const statBarData = [
@@ -35,6 +48,8 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
     { label: "Resolved Today", count: resolvedToday.length, color: "#10b981" },
     { label: "Total", count: incidents.length, color: "#06b6d4" },
   ];
+
+  const stationList = [...new Set(incidents.map(i => i.station))].sort();
 
   return (
     <div className="space-y-4">
@@ -46,7 +61,7 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
         <KPICard label="Total Reported" value={String(incidents.length)} sub="all time" color="#06b6d4" />
       </div>
 
-      {/* Search & Filters */}
+      {/* Search, Filters, Sort */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="relative w-full sm:max-w-xs">
           <Search size={12} style={{ color: "#4a5f78", position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
@@ -56,9 +71,15 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
             style={{ background: "#080e1c", border: "1px solid rgba(100,140,200,0.1)", color: "#c9d4e8" }} />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={onNewIncident}
+            className="flex items-center gap-1 px-3 py-1.5 rounded text-[10px] font-medium transition-all"
+            style={{ background: "#f59e0b", color: "#04080f" }}>
+            <Plus size={12} /> New
+          </button>
+          <div className="w-px h-4" style={{ background: "rgba(100,140,200,0.15)" }} />
           {["ALL", "OPEN", "ACTIVE", "RESOLVED"].map(s => (
             <button key={s} onClick={() => setStatusFilter(s as "ALL" | IncidentStatus)}
-              className="px-3 sm:px-2.5 py-1.5 sm:py-1 rounded text-[10px] font-mono uppercase tracking-wider transition-colors"
+              className="px-2.5 sm:px-2 py-1.5 sm:py-1 rounded text-[10px] font-mono uppercase tracking-wider transition-colors"
               style={{
                 background: statusFilter === s ? "rgba(245,158,11,0.12)" : "transparent",
                 color: statusFilter === s ? "#f59e0b" : "#4a5f78",
@@ -67,7 +88,47 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
               {s === "ALL" ? "All" : s}
             </button>
           ))}
+          <div className="w-px h-4" style={{ background: "rgba(100,140,200,0.15)" }} />
+          <button onClick={() => setSortBy(prev => prev === "newest" ? "oldest" : prev === "oldest" ? "severity" : "newest")}
+            className="flex items-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] font-mono transition-colors"
+            style={{ color: "#7a8fa8", border: "1px solid rgba(100,140,200,0.1)" }}>
+            <ArrowUpDown size={10} />
+            {sortBy === "newest" ? "Newest" : sortBy === "oldest" ? "Oldest" : "Severity"}
+          </button>
         </div>
+      </div>
+
+      {/* Station filter chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling: "touch" }}>
+        <button onClick={() => setStationFilter("ALL")}
+          className="px-2.5 py-1 rounded text-[10px] font-mono whitespace-nowrap transition-colors"
+          style={{
+            background: stationFilter === "ALL" ? "rgba(245,158,11,0.12)" : "transparent",
+            color: stationFilter === "ALL" ? "#f59e0b" : "#4a5f78",
+            border: "1px solid " + (stationFilter === "ALL" ? "rgba(245,158,11,0.2)" : "transparent"),
+          }}>All Stations</button>
+        <button onClick={() => setStationFilter(userStation)}
+          className="px-2.5 py-1 rounded text-[10px] font-mono whitespace-nowrap transition-colors"
+          style={{
+            background: stationFilter === userStation ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.08)",
+            color: stationFilter === userStation ? "#f59e0b" : "#10b981",
+            border: "1px solid " + (stationFilter === userStation ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"),
+          }}>
+          <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: getStationInfo(userStation).color, marginRight: 4, verticalAlign: "middle" }} />
+          My Station
+        </button>
+        {stationList.filter(s => s !== userStation).map(st => (
+          <button key={st} onClick={() => setStationFilter(st)}
+            className="px-2.5 py-1 rounded text-[10px] font-mono whitespace-nowrap transition-colors"
+            style={{
+              background: stationFilter === st ? "rgba(245,158,11,0.12)" : "transparent",
+              color: stationFilter === st ? "#f59e0b" : "#7a8fa8",
+              border: "1px solid " + (stationFilter === st ? "rgba(245,158,11,0.2)" : "rgba(100,140,200,0.1)"),
+            }}>
+            <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: getStationInfo(st).color, marginRight: 4, verticalAlign: "middle" }} />
+            {st}
+          </button>
+        ))}
       </div>
 
       {/* Charts row */}
@@ -77,7 +138,7 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
           <ResponsiveContainer width="100%" height={130}>
             <AreaChart data={HOURLY_DATA} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
               <defs>
-                <linearGradient id="colorCount" x1={0} y1={0} x2={0} y2={1}>
+                <linearGradient id="colorCount2" x1={0} y1={0} x2={0} y2={1}>
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
@@ -85,7 +146,7 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
               <XAxis dataKey="h" tick={{ fontSize: 9, fill: "#4a5f78", fontFamily: FONT_MONO }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 9, fill: "#4a5f78", fontFamily: FONT_MONO }} tickLine={false} axisLine={false} />
               <Tooltip contentStyle={{ background: "#0c1428", border: "1px solid rgba(100,140,200,0.15)", borderRadius: 4, fontSize: 10, fontFamily: FONT_MONO }} />
-              <Area type="monotone" dataKey="count" stroke="#f59e0b" fillOpacity={1} fill="url(#colorCount)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="count" stroke="#f59e0b" fillOpacity={1} fill="url(#colorCount2)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -121,17 +182,25 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
         </ResponsiveContainer>
       </div>
 
-      {/* All Incidents - Cards on mobile, Table on desktop */}
+      {/* All Incidents */}
       <div className="rounded border overflow-hidden" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
-        <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
-          <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>All Incidents</p>
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
+          <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>
+            Incidents {filtered.length < incidents.length && <span style={{ color: "#f59e0b" }}>({filtered.length})</span>}
+          </p>
         </div>
+
+        {filtered.length === 0 && (
+          <div className="py-12 text-center">
+            <p className="text-[11px] font-mono mb-2" style={{ color: "#4a5f78" }}>No incidents found</p>
+            {stationFilter !== "ALL" && (
+              <button onClick={() => setStationFilter("ALL")} className="text-[10px] font-mono underline" style={{ color: "#f59e0b" }}>Clear filter</button>
+            )}
+          </div>
+        )}
 
         {mobile ? (
           <div className="divide-y" style={{ borderColor: "rgba(100,140,200,0.05)" }}>
-            {filtered.length === 0 && (
-              <div className="py-8 text-center text-[11px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</div>
-            )}
             {filtered.map(inc => (
               <div key={inc.id} onClick={() => onSelectIncident(inc.id)}
                 className="px-4 py-3 active:bg-white/[0.03] transition-colors cursor-pointer"
@@ -145,7 +214,7 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
                   <StatusBadge status={inc.status} />
                 </div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, marginRight: 2, verticalAlign: "middle" }} />
+                  <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: getStationInfo(inc.station).color, verticalAlign: "middle" }} />
                   <span className="text-[11px]" style={{ color: "#c9d4e8" }}>{inc.station}</span>
                   <span className="text-[9px] font-mono" style={{ color: "#4a5f78" }}>· {inc.location}</span>
                 </div>
@@ -168,9 +237,6 @@ export function Dashboard({ incidents, onSelectIncident, mobile }: DashboardProp
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="py-8 text-center text-[10px] font-mono" style={{ color: "#4a5f78" }}>No incidents found</td></tr>
-                )}
                 {filtered.map(inc => (
                   <tr key={inc.id} className="border-b hover:bg-white/[0.02] cursor-pointer transition-colors" style={{ borderColor: "rgba(100,140,200,0.05)" }} onClick={() => onSelectIncident(inc.id)}>
                     <td className="py-2.5 px-3">

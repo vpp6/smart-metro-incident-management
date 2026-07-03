@@ -1,15 +1,16 @@
-import { ArrowLeft, Download, Info, Bell, AlertTriangle, Users, Train, Building2, ClipboardCheck, BarChart3 } from "lucide-react";
+import { ArrowLeft, Edit3, Trash2, Info, Bell, AlertTriangle, Users, Train, Building2, ClipboardCheck, BarChart3 } from "lucide-react";
 import { SEV_CONFIG, FONT_SANS, FONT_MONO, getStationInfo } from "@/config/constants";
-import { SevBadge, StatusBadge, TypeTag } from "@/components/ui/badge";
-import { formatTime } from "@/lib/utils";
+import { SevBadge, StatusBadge } from "@/components/ui/badge";
 import type { Incident } from "@/types";
 
 interface Props {
   incident: Incident;
   onBack: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function IncidentDetail({ incident, onBack }: Props) {
+export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
   const sevConf = SEV_CONFIG[incident.severity];
 
   function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
@@ -57,6 +58,24 @@ export function IncidentDetail({ incident, onBack }: Props) {
             {incident.date} ({incident.day}) · {incident.time} · {incident.shift}
           </p>
         </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        {onEdit && (
+          <button onClick={onEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
+            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontFamily: FONT_SANS }}>
+            <Edit3 size={12} /> Edit
+          </button>
+        )}
+        {onDelete && (
+          <button onClick={onDelete}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
+            <Trash2 size={12} /> Delete
+          </button>
+        )}
       </div>
 
       {/* Grid of sections */}

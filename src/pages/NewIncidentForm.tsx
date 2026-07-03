@@ -92,24 +92,94 @@ interface FormData {
 
 interface Props {
   onSubmit: (inc: Partial<Incident>) => void;
+  onUpdate?: (id: string, inc: Partial<Incident>) => void;
+  editIncident?: Incident | null;
 }
 
-export function NewIncidentForm({ onSubmit }: Props) {
+function incidentToForm(e: Incident): FormData {
+  return {
+    date: e.date, day: e.day, time: e.time, shift: e.shift as any,
+    station: e.station, location: e.location as any, description: e.description,
+    discoveredBy: e.detection?.discoveredBy as any || "OCC",
+    reportedBy: e.detection?.reportedBy || "",
+    discoveryTime: e.detection?.discoveryTime || "",
+    occNotificationTime: e.detection?.occNotificationTime || "",
+    occResponseTime: e.detection?.occResponseTime || "",
+    emergencyCode: e.detection?.emergencyCode || "",
+    permitNumber: e.detection?.permitNumber || "",
+    incidentType: e.incidentType as any,
+    severity: e.severity,
+    passengerName: e.passenger?.name || "",
+    passengerAge: String(e.passenger?.age ?? ""),
+    passengerPhone: e.passenger?.phone || "",
+    emergencyContact: e.passenger?.emergencyContact || "",
+    passengerStatus: (e.passenger?.status as any) || "Stable",
+    firstAidProvided: e.passenger?.firstAidProvided || "",
+    ambulanceRequestTime: e.passenger?.ambulanceRequestTime || "",
+    ambulanceArrivalTime: e.passenger?.ambulanceArrivalTime || "",
+    handoverTime: e.passenger?.handoverTime || "",
+    departureTime: e.passenger?.departureTime || "",
+    hospital: e.passenger?.hospital || "",
+    ambulanceRef: e.passenger?.ambulanceRef || "",
+    trainNumber: e.trainOps?.trainNumber || "",
+    currentLocation: e.trainOps?.currentLocation || "",
+    destination: e.trainOps?.destination || "",
+    operationMode: (e.trainOps?.operationMode as any) || "UTO",
+    rescueTrainNumber: e.trainOps?.rescueTrainNumber || "",
+    rescueStartTime: e.trainOps?.rescueStartTime || "",
+    rescueEndTime: e.trainOps?.rescueEndTime || "",
+    handoverToOccTime: e.trainOps?.handoverToOccTime || "",
+    returnToServiceTime: e.trainOps?.returnToServiceTime || "",
+    occOrderTime: e.evacuation?.occOrderTime || "",
+    evacuationStartTime: e.evacuation?.evacuationStartTime || "",
+    evacuationCompleteTime: e.evacuation?.evacuationCompleteTime || "",
+    stationClearReportTime: e.evacuation?.stationClearReportTime || "",
+    stationReopenTime: e.evacuation?.stationReopenTime || "",
+    smName: e.staff?.sm?.name || "",
+    smJob: e.staff?.sm?.role || "",
+    asmName: e.staff?.asm?.name || "",
+    asmJob: e.staff?.asm?.role || "",
+    saName: e.staff?.sa?.name || "",
+    saJob: e.staff?.sa?.role || "",
+    securityName: e.staff?.security?.name || "",
+    securityJob: e.staff?.security?.role || "",
+    maintenanceName: e.staff?.maintenance?.name || "",
+    maintenanceJob: e.staff?.maintenance?.role || "",
+    ambulanceName: e.staff?.ambulance?.name || "",
+    ambulanceJob: e.staff?.ambulance?.role || "",
+    policeName: e.staff?.police?.name || "",
+    policeJob: e.staff?.police?.role || "",
+    civilDefenseName: e.staff?.civilDefense?.name || "",
+    civilDefenseJob: e.staff?.civilDefense?.role || "",
+    otherStaff: "",
+    rootCause: e.impact?.rootCause || "",
+    correctiveActions: e.impact?.correctiveActions || "",
+    lessonsLearned: e.impact?.lessonsLearned || "",
+    injuries: String(e.impact?.injuries ?? "0"),
+    fatalities: String(e.impact?.fatalities ?? "0"),
+    affectedPassengers: String(e.impact?.affectedPassengers ?? "0"),
+    affectedEquipment: e.impact?.affectedEquipment || "",
+    trainDelay: String(e.impact?.trainDelay ?? "0"),
+  };
+}
+
+export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
+  const isEditing = !!editIncident;
   const [step, setStep] = useState<StepKey>("general");
   const [submitted, setSubmitted] = useState(false);
   const now = nowHHMM();
   const today = todayYYYYMMDD();
 
-  const [f, setF] = useState<FormData>({
+  const initialForm = editIncident ? incidentToForm(editIncident) : {
     date: today, day: getDayName(new Date()), time: now, shift: getShift(new Date().getHours()),
-    station: STATION_NAMES[0], location: "Platform", description: "",
-    discoveredBy: "OCC", reportedBy: "", discoveryTime: now,
+    station: STATION_NAMES[0], location: "Platform" as const, description: "",
+    discoveredBy: "OCC" as const, reportedBy: "", discoveryTime: now,
     occNotificationTime: now, occResponseTime: now, emergencyCode: "", permitNumber: "",
-    incidentType: "Passenger Medical Incident", severity: "MEDIUM",
+    incidentType: "Passenger Medical Incident" as any, severity: "MEDIUM" as any,
     passengerName: "", passengerAge: "", passengerPhone: "", emergencyContact: "",
-    passengerStatus: "Stable", firstAidProvided: "", ambulanceRequestTime: "",
+    passengerStatus: "Stable" as any, firstAidProvided: "", ambulanceRequestTime: "",
     ambulanceArrivalTime: "", handoverTime: "", departureTime: "", hospital: "", ambulanceRef: "",
-    trainNumber: "", currentLocation: "", destination: "", operationMode: "UTO",
+    trainNumber: "", currentLocation: "", destination: "", operationMode: "UTO" as any,
     rescueTrainNumber: "", rescueStartTime: "", rescueEndTime: "",
     handoverToOccTime: "", returnToServiceTime: "",
     occOrderTime: "", evacuationStartTime: "", evacuationCompleteTime: "",
@@ -120,7 +190,9 @@ export function NewIncidentForm({ onSubmit }: Props) {
     civilDefenseName: "", civilDefenseJob: "", otherStaff: "",
     rootCause: "", correctiveActions: "", lessonsLearned: "",
     injuries: "0", fatalities: "0", affectedPassengers: "0", affectedEquipment: "", trainDelay: "0",
-  });
+  };
+
+  const [f, setF] = useState<FormData>(initialForm as FormData);
 
   function set<K extends keyof FormData>(k: K, v: FormData[K]) {
     setF(prev => ({ ...prev, [k]: v }));
@@ -133,64 +205,75 @@ export function NewIncidentForm({ onSubmit }: Props) {
   const stepIndex = STEPS.findIndex(s => s.key === step);
   const totalSteps = STEPS.length;
 
+  function buildIncidentData(): Partial<Incident> {
+    return {
+      date: f.date,
+      day: f.day,
+      time: f.time,
+      shift: f.shift,
+      station: f.station,
+      location: f.location,
+      description: f.description,
+      incidentType: f.incidentType,
+      severity: f.severity,
+      detection: {
+        discoveredBy: f.discoveredBy,
+        reportedBy: f.reportedBy,
+        discoveryTime: f.discoveryTime,
+        occNotificationTime: f.occNotificationTime,
+        occResponseTime: f.occResponseTime,
+        emergencyCode: f.emergencyCode,
+        permitNumber: f.permitNumber,
+      },
+      ...(isMedical ? {
+        passenger: {
+          name: f.passengerName, age: Number(f.passengerAge), phone: f.passengerPhone,
+          emergencyContact: f.emergencyContact, status: f.passengerStatus,
+          firstAidProvided: f.firstAidProvided, ambulanceRequestTime: f.ambulanceRequestTime,
+          ambulanceArrivalTime: f.ambulanceArrivalTime, handoverTime: f.handoverTime,
+          departureTime: f.departureTime, hospital: f.hospital, ambulanceRef: f.ambulanceRef,
+        },
+      } : {}),
+      ...(isTrainRelated ? {
+        trainOps: {
+          trainNumber: f.trainNumber, currentLocation: f.currentLocation, destination: f.destination,
+          operationMode: f.operationMode, rescueTrainNumber: f.rescueTrainNumber,
+          rescueStartTime: f.rescueStartTime, rescueEndTime: f.rescueEndTime,
+          handoverToOccTime: f.handoverToOccTime, returnToServiceTime: f.returnToServiceTime,
+        },
+      } : {}),
+      evacuation: {
+        occOrderTime: f.occOrderTime, evacuationStartTime: f.evacuationStartTime,
+        evacuationCompleteTime: f.evacuationCompleteTime, stationClearReportTime: f.stationClearReportTime,
+        stationReopenTime: f.stationReopenTime,
+      },
+      impact: {
+        incidentDuration: 0, responseDuration: 0, evacuationDuration: 0, trainRescueDuration: 0,
+        trainDelay: Number(f.trainDelay), affectedPassengers: Number(f.affectedPassengers),
+        affectedEquipment: f.affectedEquipment, injuries: Number(f.injuries), fatalities: Number(f.fatalities),
+        rootCause: f.rootCause, correctiveActions: f.correctiveActions, lessonsLearned: f.lessonsLearned,
+        closed: false,
+      },
+    };
+  }
+
   function handleSubmit() {
     setSubmitted(true);
     setTimeout(() => {
-      const inc: Partial<Incident> = {
-        id: String(Date.now()),
-        code: `INC-${new Date().getFullYear()}-${Math.floor(Math.random() * 900) + 100}`,
-        date: f.date,
-        day: f.day,
-        time: f.time,
-        shift: f.shift,
-        station: f.station,
-        location: f.location,
-        description: f.description,
-        incidentType: f.incidentType,
-        severity: f.severity,
-        status: "OPEN",
-        reportedAt: new Date(),
-        assignedStaff: [],
-        detection: {
-          discoveredBy: f.discoveredBy,
-          reportedBy: f.reportedBy,
-          discoveryTime: f.discoveryTime,
-          occNotificationTime: f.occNotificationTime,
-          occResponseTime: f.occResponseTime,
-          emergencyCode: f.emergencyCode,
-          permitNumber: f.permitNumber,
-        },
-        ...(isMedical ? {
-          passenger: {
-            name: f.passengerName, age: Number(f.passengerAge), phone: f.passengerPhone,
-            emergencyContact: f.emergencyContact, status: f.passengerStatus,
-            firstAidProvided: f.firstAidProvided, ambulanceRequestTime: f.ambulanceRequestTime,
-            ambulanceArrivalTime: f.ambulanceArrivalTime, handoverTime: f.handoverTime,
-            departureTime: f.departureTime, hospital: f.hospital, ambulanceRef: f.ambulanceRef,
-          },
-        } : {}),
-        ...(isTrainRelated ? {
-          trainOps: {
-            trainNumber: f.trainNumber, currentLocation: f.currentLocation, destination: f.destination,
-            operationMode: f.operationMode, rescueTrainNumber: f.rescueTrainNumber,
-            rescueStartTime: f.rescueStartTime, rescueEndTime: f.rescueEndTime,
-            handoverToOccTime: f.handoverToOccTime, returnToServiceTime: f.returnToServiceTime,
-          },
-        } : {}),
-        evacuation: {
-          occOrderTime: f.occOrderTime, evacuationStartTime: f.evacuationStartTime,
-          evacuationCompleteTime: f.evacuationCompleteTime, stationClearReportTime: f.stationClearReportTime,
-          stationReopenTime: f.stationReopenTime,
-        },
-        impact: {
-          incidentDuration: 0, responseDuration: 0, evacuationDuration: 0, trainRescueDuration: 0,
-          trainDelay: Number(f.trainDelay), affectedPassengers: Number(f.affectedPassengers),
-          affectedEquipment: f.affectedEquipment, injuries: Number(f.injuries), fatalities: Number(f.fatalities),
-          rootCause: f.rootCause, correctiveActions: f.correctiveActions, lessonsLearned: f.lessonsLearned,
-          closed: false,
-        },
-      };
-      onSubmit(inc);
+      const data = buildIncidentData();
+      if (isEditing && onUpdate && editIncident) {
+        onUpdate(editIncident.id, { ...data, code: editIncident.code, status: editIncident.status });
+      } else {
+        const inc: Partial<Incident> = {
+          id: String(Date.now()),
+          code: `INC-${new Date().getFullYear()}-${Math.floor(Math.random() * 900) + 100}`,
+          ...data,
+          status: "OPEN",
+          reportedAt: new Date(),
+          assignedStaff: [],
+        };
+        onSubmit(inc);
+      }
     }, 600);
   }
 
@@ -200,8 +283,8 @@ export function NewIncidentForm({ onSubmit }: Props) {
         <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>
           <CheckCircle size={32} style={{ color: "#10b981" }} />
         </div>
-        <p className="text-lg font-semibold" style={{ color: "#c9d4e8", fontFamily: FONT_SANS }}>Incident Recorded Successfully</p>
-        <p className="text-[12px] font-mono" style={{ color: "#4a5f78" }}>Sending alerts to the relevant team...</p>
+        <p className="text-lg font-semibold" style={{ color: "#c9d4e8", fontFamily: FONT_SANS }}>{isEditing ? "Incident Updated Successfully" : "Incident Recorded Successfully"}</p>
+        <p className="text-[12px] font-mono" style={{ color: "#4a5f78" }}>{isEditing ? "Changes have been saved." : "Sending alerts to the relevant team..."}</p>
       </div>
     );
   }
