@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Search } from "lucide-react";
-import { FONT_SANS, FONT_MONO } from "@/config/constants";
+import { ArrowLeft, Plus, Trash2, Search, Loader } from "lucide-react";
+import { FONT_SANS } from "@/config/constants";
 import type { StaffUser } from "@/types";
+import { api } from "@/lib/api";
 
 interface Props {
   staffList: StaffUser[];
@@ -12,6 +13,8 @@ interface Props {
 export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [newStaff, setNewStaff] = useState({ jobNumber: "", name: "", password: "", role: "", station: "" });
 
   const filtered = staffList.filter(s =>
@@ -21,30 +24,40 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
     s.station.toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleDelete(id: string) {
-    if (window.confirm("Delete this staff member?")) {
+  async function handleDelete(id: string) {
+    if (!window.confirm("Delete this staff member?")) return;
+    try {
+      await api.deleteStaff(id);
       onUpdateStaff(staffList.filter(s => s.id !== id));
+    } catch (err: any) {
+      setError(err.message);
     }
   }
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!newStaff.jobNumber || !newStaff.name) return;
-    const entry: StaffUser = {
-      id: `staff-${Date.now()}`,
-      jobNumber: newStaff.jobNumber.toUpperCase(),
-      name: newStaff.name,
-      password: newStaff.password || "staff123",
-      role: newStaff.role || "Staff",
-      station: newStaff.station || "Unassigned",
-    };
-    onUpdateStaff([...staffList, entry]);
-    setNewStaff({ jobNumber: "", name: "", password: "", role: "", station: "" });
-    setShowForm(false);
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api.createStaff({
+        jobNumber: newStaff.jobNumber.toUpperCase(),
+        name: newStaff.name,
+        password: newStaff.password || "staff123",
+        role: newStaff.role || "Staff",
+        station: newStaff.station || "Unassigned",
+      });
+      onUpdateStaff([...staffList, created]);
+      setNewStaff({ jobNumber: "", name: "", password: "", role: "", station: "" });
+      setShowForm(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={onBack} className="p-1.5 rounded hover:bg-white/5 transition-colors" style={{ color: "#4a5f78", border: "1px solid rgba(100,140,200,0.1)" }}>
           <ArrowLeft size={14} />
@@ -55,7 +68,6 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
         </div>
       </div>
 
-      {/* Search + Add */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search size={12} style={{ color: "#4a5f78", position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
@@ -71,10 +83,10 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
         </button>
       </div>
 
-      {/* Add form */}
       {showForm && (
         <div className="rounded border p-4 space-y-3" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
           <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>New Staff Member</p>
+          {error && <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label className="block text-[9px] font-mono mb-1" style={{ color: "#4a5f78" }}>Job Number</label>
@@ -100,7 +112,7 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
             <div>
               <label className="block text-[9px] font-mono mb-1" style={{ color: "#4a5f78" }}>Station</label>
               <input value={newStaff.station} onChange={e => setNewStaff(p => ({ ...p, station: e.target.value }))}
-                placeholder="e.g. SAB"
+                placeholder="e.g. Qasr Al Hokm"
                 className="w-full px-2.5 py-2 rounded text-[12px] outline-none"
                 style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", minHeight: 38 }} />
             </div>
@@ -112,10 +124,11 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
                 style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", minHeight: 38 }} />
             </div>
             <div className="flex items-end gap-2">
-              <button onClick={handleAdd}
-                className="px-4 py-2 rounded text-[11px] transition-all"
-                style={{ background: "#f59e0b", color: "#04080f", minHeight: 38 }}>
-                Add
+              <button onClick={handleAdd} disabled={busy}
+                className="flex items-center gap-1.5 px-4 py-2 rounded text-[11px] transition-all"
+                style={{ background: busy ? "#4a5f78" : "#f59e0b", color: busy ? "#0f1a2e" : "#04080f", minHeight: 38 }}>
+                {busy && <Loader size={12} className="animate-spin" />}
+                {busy ? "Adding..." : "Add"}
               </button>
               <button onClick={() => setShowForm(false)}
                 className="px-4 py-2 rounded text-[11px] transition-all"
@@ -127,7 +140,6 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
         </div>
       )}
 
-      {/* Staff table */}
       <div className="rounded border overflow-hidden" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
         <div className="overflow-x-auto">
           <table className="w-full">

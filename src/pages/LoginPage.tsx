@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Train, Eye, EyeOff, Users } from "lucide-react";
+import { Train, Eye, EyeOff, Users, Loader } from "lucide-react";
 import { FONT_SANS } from "@/config/constants";
-import { DEFAULT_STAFF, verifyStaff } from "@/data/staff";
-import type { StaffUser } from "@/types";
+import { api } from "@/lib/api";
 
 export interface LoginResult {
   station: string;
@@ -20,25 +19,26 @@ export function LoginPage({ onLogin }: Props) {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setBusy(true);
 
-    const trimmedJob = jobNumber.trim().toUpperCase();
-    const staff = verifyStaff(trimmedJob, password, DEFAULT_STAFF);
-
-    if (!staff) {
-      setError("Invalid job number or password");
-      return;
+    try {
+      const user = await api.login(jobNumber.trim().toUpperCase(), password);
+      onLogin({
+        station: user.station,
+        managerName: user.name,
+        jobNumber: user.jobNumber,
+        role: user.role,
+      });
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+    } finally {
+      setBusy(false);
     }
-
-    onLogin({
-      station: staff.station,
-      managerName: staff.name,
-      jobNumber: staff.jobNumber,
-      role: staff.role,
-    });
   }
 
   return (
@@ -59,7 +59,7 @@ export function LoginPage({ onLogin }: Props) {
               placeholder="e.g. SM-001, OCC-001"
               className="w-full px-3 py-2.5 rounded text-[13px] outline-none"
               style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", minHeight: 42 }}
-              autoFocus />
+              autoFocus disabled={busy} />
           </div>
 
           <div>
@@ -68,7 +68,7 @@ export function LoginPage({ onLogin }: Props) {
               <input type={showPw ? "text" : "password"} value={password} onChange={e => { setPassword(e.target.value); setError(""); }}
                 placeholder="Enter password"
                 className="w-full px-3 py-2.5 rounded text-[13px] outline-none"
-                style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", minHeight: 42 }} />
+                style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", minHeight: 42 }} disabled={busy} />
               <button type="button" onClick={() => setShowPw(!showPw)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1" style={{ color: "#4a5f78" }}>
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -82,10 +82,11 @@ export function LoginPage({ onLogin }: Props) {
             </p>
           )}
 
-          <button type="submit"
-            className="w-full py-2.5 rounded text-[13px] font-semibold transition-all hover:opacity-90"
-            style={{ background: "#f59e0b", color: "#04080f", minHeight: 42 }}>
-            Login
+          <button type="submit" disabled={busy}
+            className="w-full py-2.5 rounded text-[13px] font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+            style={{ background: busy ? "#4a5f78" : "#f59e0b", color: busy ? "#0f1a2e" : "#04080f", minHeight: 42 }}>
+            {busy && <Loader size={14} className="animate-spin" />}
+            {busy ? "Signing in..." : "Login"}
           </button>
         </form>
 

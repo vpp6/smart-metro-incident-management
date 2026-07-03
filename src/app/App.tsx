@@ -4,11 +4,10 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoginPage } from "@/pages/LoginPage";
-import { SAMPLE_INCIDENTS } from "@/data/sample";
-import { DEFAULT_STAFF } from "@/data/staff";
 import { FONT_SANS } from "@/config/constants";
 import type { View, Incident, StaffUser } from "@/types";
 import type { LoginResult } from "@/pages/LoginPage";
+import { api } from "@/lib/api";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const NewIncidentForm = lazy(() => import("@/pages/NewIncidentForm").then(m => ({ default: m.NewIncidentForm })));
@@ -28,14 +27,65 @@ export default function App() {
   const [user, setUser] = useState<LoginResult | null>(null);
   const [view, setView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [incidents, setIncidents] = useState<Incident[]>(SAMPLE_INCIDENTS);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
-  const [staffList, setStaffList] = useState<StaffUser[]>(DEFAULT_STAFF);
+  const [staffList, setStaffList] = useState<StaffUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const selectedIncident = incidents.find(i => i.id === selectedId) || null;
   const activeCount = incidents.filter(i => i.status !== "RESOLVED").length;
   const isMobile = window.innerWidth < 768;
+
+  // Restore session on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("metro_user");
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        setUser(u);
+        setLoading(false);
+      } catch {
+        localStorage.removeItem("metro_user");
+        localStorage.removeItem("metro_token");
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch incidents when user logs in
+  useEffect(() => {
+    if (!user) return;
+    const token = api.getToken();
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [incData, staffData] = await Promise.all([
+          api.getIncidents(),
+          api.getStaff().catch(() => []),
+        ]);
+        setIncidents(incData);
+        setStaffList(staffData);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  const handleLogin = useCallback(async (loginResult: LoginResult) => {
+    setUser(loginResult);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    api.logout();
+    setUser(null);
+    setIncidents([]);
+    setStaffList([]);
+  }, []);
 
   const navigate = useCallback((v: View) => {
     setView(v);
@@ -48,52 +98,58 @@ export default function App() {
     setView("incident-detail");
   }, []);
 
-  const handleNewIncident = useCallback((partial: Partial<Incident>) => {
-    const code = `INC-${new Date().getFullYear()}-${Math.floor(Math.random() * 900) + 100}`;
-    const newInc: Incident = {
-      id: String(Date.now()),
-      code,
-      date: partial.date || "",
-      day: partial.day || "",
-      time: partial.time || "",
-      shift: partial.shift || "Morning",
-      station: partial.station || "SAB",
-      location: partial.location || "Platform",
-      description: partial.description || "",
-      incidentType: partial.incidentType || "Passenger Medical Incident",
-      severity: partial.severity || "MEDIUM",
-      status: "OPEN",
-      reportedAt: new Date(),
-      assignedStaff: [],
-      detection: partial.detection,
-      passenger: partial.passenger,
-      trainOps: partial.trainOps,
-      evacuation: partial.evacuation,
-      staff: partial.staff,
-      impact: partial.impact,
-    };
-    setIncidents(prev => [newInc, ...prev]);
-    setTimeout(() => {
-      setSelectedId(newInc.id);
+  const refreshIncidents = useCallback(async () => {
+    try {
+      const data = await api.getIncidents();
+      setIncidents(data);
+    } catch (err) {
+      console.error("Failed to refresh incidents:", err);
+    }
+  }, []);
+
+  const handleNewIncident = useCallback(async (partial: Partial<Incident>) => {
+    try {
+      const created = await api.createIncident(partial);
+      setIncidents(prev => [created, ...prev]);
+      setTimeout(() => {
+        setSelectedId(created.id);
+        setView("incident-detail");
+      }, 500);
+    } catch (err) {
+      console.error("Failed to create incident:", err);
+    }
+  }, []);
+
+  const handleUpdateIncident = useCallback(async (id: string, data: Partial<Incident>) => {
+    try {
+      const updated = await api.updateIncident(id, data);
+      setIncidents(prev => prev.map(i => i.id === id ? updated : i));
+      setEditingIncident(null);
       setView("incident-detail");
-    }, 800);
+    } catch (err) {
+      console.error("Failed to update incident:", err);
+    }
   }, []);
 
-  const handleUpdateIncident = useCallback((id: string, data: Partial<Incident>) => {
-    setIncidents(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
-    setEditingIncident(null);
-    setView("incident-detail");
-  }, []);
-
-  const handleDeleteIncident = useCallback((id: string) => {
-    setIncidents(prev => prev.filter(i => i.id !== id));
-    setView("dashboard");
+  const handleDeleteIncident = useCallback(async (id: string) => {
+    try {
+      await api.deleteIncident(id);
+      setIncidents(prev => prev.filter(i => i.id !== id));
+      setView("dashboard");
+    } catch (err) {
+      console.error("Failed to delete incident:", err);
+    }
   }, []);
 
   const handleEditIncident = useCallback((inc: Incident) => {
     setEditingIncident(inc);
     setView("new-incident");
   }, []);
+
+  const handleUpdateStaff = useCallback(async (updatedStaff: StaffUser[]) => {
+    setStaffList(updatedStaff);
+    await refreshIncidents();
+  }, [refreshIncidents]);
 
   const PAGE_TITLES: Record<View, string> = {
     "dashboard":        "Dashboard",
@@ -103,7 +159,8 @@ export default function App() {
     "staff-management": "Staff Management",
   };
 
-  if (!user) return <LoginPage onLogin={setUser} />;
+  if (loading) return <LoaderFallback />;
+  if (!user) return <LoginPage onLogin={handleLogin} />;
 
   const mainOffset = !isMobile && sidebarOpen ? 220 : 0;
   const bottomPad = isMobile ? 72 : 0;
@@ -141,7 +198,7 @@ export default function App() {
                 <Users size={11} /><span className="hide-mobile">Staff</span>
               </button>
             )}
-            <button onClick={() => setUser(null)}
+            <button onClick={handleLogout}
               className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
               style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
               <LogOut size={11} /><span className="hide-mobile">Logout</span>
@@ -156,10 +213,11 @@ export default function App() {
             )}
             {view === "new-incident" && <NewIncidentForm onSubmit={handleNewIncident} onUpdate={handleUpdateIncident} editIncident={editingIncident} />}
             {view === "incident-detail" && selectedIncident && (
-              <IncidentDetail incident={selectedIncident} onBack={() => { setView("dashboard"); setSelectedId(null); }} onEdit={() => handleEditIncident(selectedIncident)} onDelete={() => handleDeleteIncident(selectedIncident.id)} />
+              <IncidentDetail incident={selectedIncident} onBack={() => { setView("dashboard"); setSelectedId(null); }}
+                onEdit={() => handleEditIncident(selectedIncident)} onDelete={() => handleDeleteIncident(selectedIncident.id)} />
             )}
             {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
-            {view === "staff-management" && <StaffManagement staffList={staffList} onUpdateStaff={setStaffList} onBack={() => setView("dashboard")} />}
+            {view === "staff-management" && <StaffManagement staffList={staffList} onUpdateStaff={handleUpdateStaff} onBack={() => setView("dashboard")} />}
           </Suspense>
         </div>
       </main>
