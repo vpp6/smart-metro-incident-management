@@ -16,10 +16,10 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
 
   function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
     return (
-      <div className="rounded border p-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b" style={{ borderColor: "rgba(100,140,200,0.08)" }}>
-          <span style={{ color: "#f59e0b" }}>{icon}</span>
-          <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{title}</span>
+      <div className="rounded border p-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b" style={{ borderColor: "var(--border)" }}>
+          <span style={{ color: "var(--primary)" }}>{icon}</span>
+          <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>{title}</span>
         </div>
         <div className="space-y-1">{children}</div>
       </div>
@@ -28,9 +28,9 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
 
   function Row({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
     return (
-      <div className="flex items-center justify-between py-1.5 border-b last:border-0" style={{ borderColor: "rgba(100,140,200,0.05)" }}>
-        <span className="text-[11px]" style={{ color: valueColor || "#c9d4e8", fontFamily: FONT_SANS }}>{value}</span>
-        <span className="text-[9px] font-mono" style={{ color: "#4a5f78" }}>{label}</span>
+      <div className="flex items-center justify-between py-1.5 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+        <span className="text-[11px]" style={{ color: valueColor || "var(--foreground)", fontFamily: FONT_SANS }}>{value}</span>
+        <span className="text-[9px] font-mono" style={{ color: "var(--muted-foreground)" }}>{label}</span>
       </div>
     );
   }
@@ -46,16 +46,16 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
     <div className="space-y-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <button onClick={onBack} className="p-1.5 rounded hover:bg-white/5 transition-colors mt-0.5" style={{ color: "#4a5f78", border: "1px solid rgba(100,140,200,0.1)" }}>
+        <button onClick={onBack} className="p-1.5 rounded hover:bg-white/5 transition-colors mt-0.5" style={{ color: "var(--muted-foreground)", border: "1px solid rgba(100,140,200,0.1)" }}>
           <ArrowLeft size={14} />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-mono text-[13px]" style={{ color: "#c9d4e8" }}>{incident.code}</span>
+            <span className="font-mono text-[13px]" style={{ color: "var(--foreground)" }}>{incident.code}</span>
             <SevBadge sev={incident.severity} />
             <StatusBadge status={incident.status} />
           </div>
-          <p className="text-[11px]" style={{ color: "#7a8fa8", fontFamily: FONT_SANS }}>
+          <p className="text-[11px]" style={{ color: "var(--secondary-foreground)", fontFamily: FONT_SANS }}>
             {incident.date} ({incident.day}) · {incident.time} · {incident.shift}
           </p>
         </div>
@@ -66,20 +66,20 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
         {onEdit && (
           <button onClick={onEdit}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
-            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontFamily: FONT_SANS }}>
+            style={{ background: "rgba(var(--primary-rgb), 0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "var(--primary)", fontFamily: FONT_SANS }}>
             <Edit3 size={12} /> Edit
           </button>
         )}
         {onDelete && (
           <button onClick={onDelete}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: FONT_SANS }}>
+            style={{ background: "rgba(var(--destructive-rgb), 0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--destructive)", fontFamily: FONT_SANS }}>
             <Trash2 size={12} /> Delete
           </button>
         )}
         <button onClick={() => emailIncident(incident)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] transition-all hover:opacity-80 ml-auto"
-          style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "#06b6d4", fontFamily: FONT_SANS }}>
+          style={{ background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "var(--accent)", fontFamily: FONT_SANS }}>
           <Mail size={12} /> Email
         </button>
       </div>
@@ -194,8 +194,8 @@ export function IncidentDetail({ incident, onBack, onEdit, onDelete }: Props) {
             <Row label="Train Delay" value={im.trainDelay ? `${im.trainDelay} min` : "—"} />
             <Row label="Affected Pass." value={String(im.affectedPassengers)} />
             <Row label="Affected Equipment" value={im.affectedEquipment || "—"} />
-            <Row label="Injuries" value={String(im.injuries)} valueColor={im.injuries > 0 ? "#ef4444" : undefined} />
-            <Row label="Fatalities" value={String(im.fatalities)} valueColor={im.fatalities > 0 ? "#ef4444" : undefined} />
+            <Row label="Injuries" value={String(im.injuries)} valueColor={im.injuries > 0 ? "var(--destructive)" : undefined} />
+            <Row label="Fatalities" value={String(im.fatalities)} valueColor={im.fatalities > 0 ? "var(--destructive)" : undefined} />
             <Row label="Root Cause" value={im.rootCause || "—"} />
             <Row label="Corrective Actions" value={im.correctiveActions || "—"} />
             <Row label="Lessons Learned" value={im.lessonsLearned || "—"} />

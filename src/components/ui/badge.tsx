@@ -13,9 +13,9 @@ export function SevBadge({ sev }: { sev: Severity }) {
 
 export function StatusBadge({ status }: { status: IncidentStatus }) {
   const map: Record<IncidentStatus, { label: string; color: string }> = {
-    OPEN:     { label: "Open",   color: "#f59e0b" },
-    ACTIVE:   { label: "Active", color: "#06b6d4" },
-    RESOLVED: { label: "Closed", color: "#10b981" },
+    OPEN:     { label: "Open",   color: "var(--primary)" },
+    ACTIVE:   { label: "Active", color: "var(--accent)" },
+    RESOLVED: { label: "Closed", color: "var(--chart-3)" },
   };
   const { label, color } = map[status];
   return (

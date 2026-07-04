@@ -9,6 +9,8 @@ import type { View, Incident, StaffUser } from "@/types";
 import type { LoginResult } from "@/pages/LoginPage";
 import { api } from "@/lib/api";
 
+import { ThemeProvider } from "@/lib/useTheme";
+
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const NewIncidentForm = lazy(() => import("@/pages/NewIncidentForm").then(m => ({ default: m.NewIncidentForm })));
 const IncidentDetail = lazy(() => import("@/pages/IncidentDetail").then(m => ({ default: m.IncidentDetail })));
@@ -18,7 +20,7 @@ const StaffManagement = lazy(() => import("@/pages/StaffManagement").then(m => (
 function LoaderFallback() {
   return (
     <div className="flex items-center justify-center py-20">
-      <Loader size={20} className="animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader size={20} className="animate-spin" style={{ color: "var(--primary)" }} />
     </div>
   );
 }
@@ -166,12 +168,13 @@ export default function App() {
   const bottomPad = isMobile ? 72 : 0;
 
   return (
-    <div dir="ltr" style={{ background: "#04080f", minHeight: "100vh", fontFamily: FONT_SANS }}>
+    <ThemeProvider>
+    <div dir="ltr" style={{ background: "var(--background)", minHeight: "100vh", fontFamily: FONT_SANS }}>
       <style>{`
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(100,140,200,0.15); border-radius: 2px; }
-        * { scrollbar-width: thin; scrollbar-color: rgba(100,140,200,0.15) transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
         @media (max-width: 767px) { .hide-mobile { display: none !important; } .show-mobile-only { display: inline !important; } }
         @media (min-width: 768px) { .show-mobile-only { display: none !important; } }
       `}</style>
@@ -181,26 +184,26 @@ export default function App() {
       <TopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} incidents={incidents} mobile={isMobile} />
 
       <main className="transition-all duration-300" style={{ marginLeft: mainOffset, paddingTop: 44, paddingBottom: bottomPad }}>
-        <div className="sticky top-0 z-20 px-3 sm:px-5 py-2.5 border-b flex items-center justify-between" style={{ background: "rgba(4,8,15,0.95)", borderColor: "rgba(100,140,200,0.08)", backdropFilter: "blur(8px)" }}>
-          <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "#4a5f78" }}>
-            <Radio size={11} style={{ color: "#10b981" }} />
+        <div className="sticky top-0 z-20 px-3 sm:px-5 py-2.5 border-b flex items-center justify-between" style={{ background: "color-mix(in srgb, var(--background) 95%, transparent)", borderColor: "var(--border)", backdropFilter: "blur(8px)" }}>
+          <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "var(--muted-foreground)" }}>
+            <Radio size={11} style={{ color: "var(--chart-3)" }} />
             <span className="hide-mobile">Incident Management System</span>
             <ChevronRight size={11} className="hide-mobile" />
-            <span style={{ color: "#c9d4e8" }}>{PAGE_TITLES[view]}</span>
+            <span style={{ color: "var(--foreground)" }}>{PAGE_TITLES[view]}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono hide-mobile" style={{ color: "#7a8fa8" }}>{user.jobNumber} · {user.managerName} · {user.station}</span>
-            <span className="text-[10px] font-mono show-mobile-only" style={{ color: "#7a8fa8" }}>{user.jobNumber}</span>
+            <span className="text-[10px] font-mono hide-mobile" style={{ color: "var(--secondary-foreground)" }}>{user.jobNumber} · {user.managerName} · {user.station}</span>
+            <span className="text-[10px] font-mono show-mobile-only" style={{ color: "var(--secondary-foreground)" }}>{user.jobNumber}</span>
             {view !== "staff-management" && (
               <button onClick={() => navigate("staff-management")}
                 className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
-                style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
+                style={{ background: "var(--border)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}>
                 <Users size={11} /><span className="hide-mobile">Staff</span>
               </button>
             )}
             <button onClick={handleLogout}
               className="flex items-center gap-1 px-2 py-1.5 rounded text-[10px] transition-all hover:opacity-80"
-              style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.1)", color: "#4a5f78" }}>
+              style={{ background: "var(--border)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}>
               <LogOut size={11} /><span className="hide-mobile">Logout</span>
             </button>
           </div>
@@ -222,5 +225,6 @@ export default function App() {
         </div>
       </main>
     </div>
+    </ThemeProvider>
   );
 }

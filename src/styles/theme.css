@@ -3,24 +3,36 @@
 :root {
   --font-size: 14px;
   --background: #04080f;
+  --background-rgb: 4, 8, 15;
   --foreground: #c9d4e8;
+  --foreground-rgb: 201, 212, 232;
   --card: #080e1c;
+  --card-rgb: 8, 14, 28;
   --card-foreground: #c9d4e8;
+  --card-foreground-rgb: 201, 212, 232;
   --popover: #0c1428;
   --popover-foreground: #c9d4e8;
   --primary: #f59e0b;
+  --primary-rgb: 245, 158, 11;
   --primary-foreground: #04080f;
   --secondary: #0f1a2e;
+  --secondary-rgb: 15, 26, 46;
   --secondary-foreground: #7a8fa8;
+  --secondary-foreground-rgb: 122, 143, 168;
   --muted: #0a1020;
   --muted-foreground: #4a5f78;
+  --muted-foreground-rgb: 74, 95, 120;
   --accent: #06b6d4;
+  --accent-rgb: 6, 182, 212;
   --accent-foreground: #04080f;
   --destructive: #ef4444;
+  --destructive-rgb: 239, 68, 68;
   --destructive-foreground: #ffffff;
   --border: rgba(100, 140, 200, 0.1);
+  --border-rgb: 100, 140, 200;
   --input: transparent;
   --input-background: #0f1a2e;
+  --input-background-rgb: 15, 26, 46;
   --switch-background: #1a2d4a;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -28,6 +40,7 @@
   --chart-1: #f59e0b;
   --chart-2: #06b6d4;
   --chart-3: #10b981;
+  --chart-3-rgb: 16, 185, 129;
   --chart-4: #ef4444;
   --chart-5: #8b5cf6;
   --radius: 0.2rem;
@@ -39,6 +52,57 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+.light {
+  --background: #ffffff;
+  --background-rgb: 255, 255, 255;
+  --foreground: #1e293b;
+  --foreground-rgb: 30, 41, 59;
+  --card: #f8fafc;
+  --card-rgb: 248, 250, 252;
+  --card-foreground: #1e293b;
+  --card-foreground-rgb: 30, 41, 59;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #d97706;
+  --primary-rgb: 217, 119, 6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-rgb: 241, 245, 249;
+  --secondary-foreground: #64748b;
+  --secondary-foreground-rgb: 100, 116, 139;
+  --muted: #f8fafc;
+  --muted-foreground: #94a3b8;
+  --muted-foreground-rgb: 148, 163, 184;
+  --accent: #0284c7;
+  --accent-rgb: 2, 132, 199;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-rgb: 239, 68, 68;
+  --destructive-foreground: #ffffff;
+  --border: rgba(226, 232, 240, 0.8);
+  --border-rgb: 226, 232, 240;
+  --input: transparent;
+  --input-background: #ffffff;
+  --input-background-rgb: 255, 255, 255;
+  --switch-background: #e2e8f0;
+  --ring: #d97706;
+  --chart-1: #d97706;
+  --chart-2: #0284c7;
+  --chart-3: #10b981;
+  --chart-3-rgb: 16, 185, 129;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+}
+
+.light .hover\:bg-white\/5:hover,
+.light .hover\:bg-white\/\[0\.02\]:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.light .bg-white\/5 {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .dark {

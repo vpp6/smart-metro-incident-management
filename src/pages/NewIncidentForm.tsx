@@ -280,11 +280,11 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>
-          <CheckCircle size={32} style={{ color: "#10b981" }} />
+        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "rgba(var(--chart-3-rgb), 0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>
+          <CheckCircle size={32} style={{ color: "var(--chart-3)" }} />
         </div>
-        <p className="text-lg font-semibold" style={{ color: "#c9d4e8", fontFamily: FONT_SANS }}>{isEditing ? "Incident Updated Successfully" : "Incident Recorded Successfully"}</p>
-        <p className="text-[12px] font-mono" style={{ color: "#4a5f78" }}>{isEditing ? "Changes have been saved." : "Sending alerts to the relevant team..."}</p>
+        <p className="text-lg font-semibold" style={{ color: "var(--foreground)", fontFamily: FONT_SANS }}>{isEditing ? "Incident Updated Successfully" : "Incident Recorded Successfully"}</p>
+        <p className="text-[12px] font-mono" style={{ color: "var(--muted-foreground)" }}>{isEditing ? "Changes have been saved." : "Sending alerts to the relevant team..."}</p>
       </div>
     );
   }
@@ -293,14 +293,14 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
     <div className="max-w-4xl mx-auto">
       {/* Step pills */}
       <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 mb-6" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <div className="flex gap-1.5 p-2 rounded border min-w-max" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="flex gap-1.5 p-2 rounded border min-w-max" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           {STEPS.map((s, i) => (
             <button key={s.key} onClick={() => setStep(s.key)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] transition-all whitespace-nowrap"
               style={{
-                background: step === s.key ? "rgba(245,158,11,0.15)" : "transparent",
+                background: step === s.key ? "rgba(var(--primary-rgb), 0.15)" : "transparent",
                 border: step === s.key ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent",
-                color: step === s.key ? "#f59e0b" : "#4a5f78",
+                color: step === s.key ? "var(--primary)" : "var(--muted-foreground)",
               }}>
               {s.icon}
               <span style={{ fontFamily: FONT_SANS, fontSize: 10 }}>{s.label}</span>
@@ -310,13 +310,13 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 rounded-full overflow-hidden mb-6" style={{ background: "rgba(100,140,200,0.1)" }}>
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%`, background: "#f59e0b" }} />
+      <div className="h-1 rounded-full overflow-hidden mb-6" style={{ background: "var(--border)" }}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%`, background: "var(--primary)" }} />
       </div>
 
       {/* ─── STEP 1: General ─────────────────────────────── */}
       {step === "general" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>General Information</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Field label="Date" value={f.date} onChange={v => set("date", v)} type="date" />
@@ -336,7 +336,7 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
 
       {/* ─── STEP 2: Detection & Reporting ──────────────── */}
       {step === "detection" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Detection & Reporting</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Select label="Discovered By" value={f.discoveredBy} onChange={v => set("discoveredBy", v as Discoverer)} options={DISCOVERERS} />
@@ -356,18 +356,18 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
 
       {/* ─── STEP 3: Incident Type ──────────────────────── */}
       {step === "type" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Incident Type & Severity</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Select label="Incident Type" value={f.incidentType} onChange={v => set("incidentType", v as ExtendedIncidentType)} options={INCIDENT_TYPES} colorMap={TYPE_COLORS} />
-            <Select label="Severity" value={f.severity} onChange={v => set("severity", v as Severity)} options={["CRITICAL", "HIGH", "MEDIUM", "LOW"]} colorMap={{ CRITICAL: "#ef4444", HIGH: "#f97316", MEDIUM: "#f59e0b", LOW: "#10b981" }} />
+            <Select label="Severity" value={f.severity} onChange={v => set("severity", v as Severity)} options={["CRITICAL", "HIGH", "MEDIUM", "LOW"]} colorMap={{ CRITICAL: "var(--destructive)", HIGH: "#f97316", MEDIUM: "var(--primary)", LOW: "var(--chart-3)" }} />
           </div>
         </div>
       )}
 
       {/* ─── STEP 4: Passenger (conditional) ────────────── */}
       {step === "passenger" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Passenger Data</SectionTitle>
           {isMedical ? (
             <>
@@ -378,7 +378,7 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <Field label="Emergency Contact" value={f.emergencyContact} onChange={v => set("emergencyContact", v)} type="text" />
-                <Select label="Status" value={f.passengerStatus} onChange={v => set("passengerStatus", v as PassengerStatus)} options={PASSENGER_STATUSES} colorMap={{ Stable: "#10b981", Moderate: "#f59e0b", Critical: "#ef4444", Deceased: "#6b7280" }} />
+                <Select label="Status" value={f.passengerStatus} onChange={v => set("passengerStatus", v as PassengerStatus)} options={PASSENGER_STATUSES} colorMap={{ Stable: "var(--chart-3)", Moderate: "var(--primary)", Critical: "var(--destructive)", Deceased: "#6b7280" }} />
                 <Field label="First Aid Provided" value={f.firstAidProvided} onChange={v => set("firstAidProvided", v)} type="text" />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -393,14 +393,14 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
               </div>
             </>
           ) : (
-            <p className="text-[11px]" style={{ color: "#4a5f78", fontFamily: FONT_SANS }}>Passenger medical data is only available for medical incidents.</p>
+            <p className="text-[11px]" style={{ color: "var(--muted-foreground)", fontFamily: FONT_SANS }}>Passenger medical data is only available for medical incidents.</p>
           )}
         </div>
       )}
 
       {/* ─── STEP 5: Train Operations (conditional) ─────── */}
       {step === "train" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Train Operations</SectionTitle>
           {isTrainRelated ? (
             <>
@@ -421,14 +421,14 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
               </div>
             </>
           ) : (
-            <p className="text-[11px]" style={{ color: "#4a5f78", fontFamily: FONT_SANS }}>Train operation data is only available for train-related incidents.</p>
+            <p className="text-[11px]" style={{ color: "var(--muted-foreground)", fontFamily: FONT_SANS }}>Train operation data is only available for train-related incidents.</p>
           )}
         </div>
       )}
 
       {/* ─── STEP 6: Evacuation ────────────────────────── */}
       {step === "evacuation" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Station Evacuation</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Field label="OCC Order Time" value={f.occOrderTime} onChange={v => set("occOrderTime", v)} type="time" />
@@ -444,9 +444,9 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
 
       {/* ─── STEP 7: Staff ──────────────────────────────── */}
       {step === "staff" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Staff</SectionTitle>
-          <p className="text-[10px]" style={{ color: "#f59e0b", fontFamily: FONT_SANS }}>Enter each person with their job number</p>
+          <p className="text-[10px]" style={{ color: "var(--primary)", fontFamily: FONT_SANS }}>Enter each person with their job number</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-3 rounded" style={{ background: "rgba(0,0,0,0.2)" }}>
             <Field label="Station Manager Name" value={f.smName} onChange={v => set("smName", v)} type="text" />
             <Field label="Station Manager Job No." value={f.smJob} onChange={v => set("smJob", v)} type="text" />
@@ -485,7 +485,7 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
 
       {/* ─── STEP 8: Impact Assessment ──────────────────── */}
       {step === "impact" && (
-        <div className="rounded border p-4 space-y-4" style={{ background: "#080e1c", borderColor: "rgba(100,140,200,0.1)" }}>
+        <div className="rounded border p-4 space-y-4" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <SectionTitle>Impact Assessment</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Field label="Injuries" value={f.injuries} onChange={v => set("injuries", v)} type="number" />
@@ -506,7 +506,7 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
       <div className="flex items-center justify-between mt-6 gap-3">
         <button onClick={() => { const idx = STEPS.findIndex(s => s.key === step); if (idx > 0) setStep(STEPS[idx - 1].key); }}
           className="flex items-center gap-1.5 px-4 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors disabled:opacity-30"
-          style={{ background: "rgba(100,140,200,0.08)", border: "1px solid rgba(100,140,200,0.15)", color: "#7a8fa8" }}
+          style={{ background: "var(--border)", border: "1px solid rgba(100,140,200,0.15)", color: "var(--secondary-foreground)" }}
           disabled={stepIndex === 0}>
           <ChevronLeft size={14} /> Back
         </button>
@@ -514,13 +514,13 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
         {stepIndex < totalSteps - 1 ? (
           <button onClick={() => setStep(STEPS[stepIndex + 1].key)}
             className="flex items-center gap-1.5 px-5 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors"
-            style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b" }}>
+            style={{ background: "rgba(var(--primary-rgb), 0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "var(--primary)" }}>
             Next
           </button>
         ) : (
           <button onClick={handleSubmit}
             className="flex items-center gap-1.5 px-5 py-2.5 sm:py-2 rounded text-[12px] sm:text-[11px] transition-colors"
-            style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981" }}>
+            style={{ background: "rgba(var(--chart-3-rgb), 0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "var(--chart-3)" }}>
             Submit Report
           </button>
         )}
@@ -533,7 +533,7 @@ export function NewIncidentForm({ onSubmit, onUpdate, editIncident }: Props) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "#4a5f78" }}>{children}</p>
+    <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>{children}</p>
   );
 }
 
@@ -542,10 +542,10 @@ function Field({ label, value, onChange, type }: {
 }) {
   return (
     <div>
-      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "#4a5f78" }}>{label}</label>
+      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)}
           className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none"
-          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }} />
+          style={{ background: "var(--secondary)", border: "1px solid rgba(100,140,200,0.12)", color: "var(--foreground)", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }} />
     </div>
   );
 }
@@ -556,13 +556,13 @@ function Select({ label, value, onChange, options, colorMap }: {
   const dotColor = colorMap?.[value];
   return (
     <div>
-      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "#4a5f78" }}>
+      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>
         {dotColor && <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: dotColor, marginRight: 6, verticalAlign: "middle" }} />}
         {label}
       </label>
       <select value={value} onChange={e => onChange(e.target.value)}
           className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none"
-          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }}>
+          style={{ background: "var(--secondary)", border: "1px solid rgba(100,140,200,0.12)", color: "var(--foreground)", fontFamily: FONT_SANS, textAlign: "left", minHeight: 40 }}>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
@@ -574,10 +574,10 @@ function TextArea({ label, value, onChange, rows }: {
 }) {
   return (
     <div>
-      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "#4a5f78" }}>{label}</label>
+      <label className="block text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>{label}</label>
       <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
           className="w-full px-3 py-2.5 sm:py-2 rounded text-[13px] sm:text-[12px] outline-none resize-none"
-          style={{ background: "#0f1a2e", border: "1px solid rgba(100,140,200,0.12)", color: "#c9d4e8", fontFamily: FONT_SANS, textAlign: "left" }} />
+          style={{ background: "var(--secondary)", border: "1px solid rgba(100,140,200,0.12)", color: "var(--foreground)", fontFamily: FONT_SANS, textAlign: "left" }} />
     </div>
   );
 }

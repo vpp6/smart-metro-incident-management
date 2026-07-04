@@ -20,7 +20,7 @@ export function BottomNav({ view, setView, activeCount }: BottomNavProps) {
       className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t"
       style={{
         background: "rgba(4,8,15,0.97)",
-        borderColor: "rgba(100,140,200,0.1)",
+        borderColor: "var(--border)",
         backdropFilter: "blur(8px)",
         height: 56,
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -33,14 +33,14 @@ export function BottomNav({ view, setView, activeCount }: BottomNavProps) {
             key={item.id}
             onClick={() => setView(item.id)}
             className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full"
-            style={{ color: isActive ? "#f59e0b" : "#4a5f78" }}
+            style={{ color: isActive ? "var(--primary)" : "var(--muted-foreground)" }}
           >
             <div className="relative">
               {item.icon}
               {item.id === "dashboard" && activeCount > 0 && (
                 <span
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                  style={{ background: "#f59e0b", color: "#04080f" }}
+                  style={{ background: "var(--primary)", color: "var(--background)" }}
                 >
                   {activeCount > 9 ? "9+" : activeCount}
                 </span>
