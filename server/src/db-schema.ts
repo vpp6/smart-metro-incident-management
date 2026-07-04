@@ -16,7 +16,7 @@ export async function initDatabase() {
   await query(`
     CREATE TABLE IF NOT EXISTS incidents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      code VARCHAR(10) UNIQUE NOT NULL,
+      code VARCHAR(50) UNIQUE NOT NULL,
       status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
       severity VARCHAR(10) NOT NULL,
       station VARCHAR(100) NOT NULL,
@@ -52,6 +52,10 @@ export async function initDatabase() {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  await query(`
+    ALTER TABLE incidents ALTER COLUMN code TYPE VARCHAR(50);
+  `).catch(() => {});
 
   await query(`
     CREATE INDEX IF NOT EXISTS idx_incidents_station ON incidents(station);
