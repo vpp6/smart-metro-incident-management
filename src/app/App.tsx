@@ -235,7 +235,7 @@ function AppInner() {
             {view === "map" && (
               <StationMap
                 incidents={incidents}
-                onStationClick={() => setView("dashboard")}
+                onSelectIncident={handleSelectIncident}
               />
             )}
           </Suspense>
