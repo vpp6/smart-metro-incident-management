@@ -1,4 +1,4 @@
-import { Activity, Plus, FileText, Train, X, Users } from "lucide-react";
+import { Activity, Plus, FileText, Train, X, Users, Map } from "lucide-react";
 import { PulseDot } from "@/components/PulseDot";
 import { STAFF_POOL, FONT_SANS } from "@/config/constants";
 import type { View, Incident } from "@/types";
@@ -19,6 +19,7 @@ export function Sidebar({ view, setView, incidents, open, onClose, mobile }: Sid
   const navItems: { id: View; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "dashboard",    label: "Dashboard",    icon: <Activity size={15} />,  badge: active },
     { id: "new-incident", label: "New Incident", icon: <Plus size={15} /> },
+    { id: "map",          label: "Station Map",  icon: <Map size={15} /> },
     { id: "reports",      label: "Reports",      icon: <FileText size={15} /> },
     { id: "staff-management", label: "Staff",    icon: <Users size={15} /> },
   ];

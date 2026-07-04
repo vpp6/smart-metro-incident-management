@@ -1,4 +1,4 @@
-export type View = "dashboard" | "new-incident" | "incident-detail" | "reports" | "staff-management";
+export type View = "dashboard" | "new-incident" | "incident-detail" | "reports" | "staff-management" | "map";
 
 export interface StaffUser {
   id: string;

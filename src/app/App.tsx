@@ -10,12 +10,15 @@ import type { LoginResult } from "@/pages/LoginPage";
 import { api } from "@/lib/api";
 
 import { ThemeProvider } from "@/lib/useTheme";
+import { ToastProvider, useToast } from "@/lib/useToast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const NewIncidentForm = lazy(() => import("@/pages/NewIncidentForm").then(m => ({ default: m.NewIncidentForm })));
 const IncidentDetail = lazy(() => import("@/pages/IncidentDetail").then(m => ({ default: m.IncidentDetail })));
 const Reports = lazy(() => import("@/pages/Reports").then(m => ({ default: m.Reports })));
 const StaffManagement = lazy(() => import("@/pages/StaffManagement").then(m => ({ default: m.StaffManagement })));
+const StationMap = lazy(() => import("@/components/StationMap").then(m => ({ default: m.StationMap })));
 
 function LoaderFallback() {
   return (
@@ -25,7 +28,7 @@ function LoaderFallback() {
   );
 }
 
-export default function App() {
+function AppInner() {
   const [user, setUser] = useState<LoginResult | null>(null);
   const [view, setView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +37,8 @@ export default function App() {
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const selectedIncident = incidents.find(i => i.id === selectedId) || null;
   const activeCount = incidents.filter(i => i.status !== "RESOLVED").length;
@@ -113,14 +118,15 @@ export default function App() {
     try {
       const created = await api.createIncident(partial);
       setIncidents(prev => [created, ...prev]);
+      toast(`Incident ${created.code} created`, "success");
       setTimeout(() => {
         setSelectedId(created.id);
         setView("incident-detail");
       }, 500);
-    } catch (err) {
-      console.error("Failed to create incident:", err);
+    } catch (err: any) {
+      toast(err.message || "Failed to create incident", "error");
     }
-  }, []);
+  }, [toast]);
 
   const handleUpdateIncident = useCallback(async (id: string, data: Partial<Incident>) => {
     try {
@@ -128,20 +134,25 @@ export default function App() {
       setIncidents(prev => prev.map(i => i.id === id ? updated : i));
       setEditingIncident(null);
       setView("incident-detail");
-    } catch (err) {
-      console.error("Failed to update incident:", err);
+      toast(`Incident ${updated.code} updated`, "success");
+    } catch (err: any) {
+      toast(err.message || "Failed to update incident", "error");
     }
-  }, []);
+  }, [toast]);
 
-  const handleDeleteIncident = useCallback(async (id: string) => {
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!confirmDelete) return;
     try {
-      await api.deleteIncident(id);
-      setIncidents(prev => prev.filter(i => i.id !== id));
+      await api.deleteIncident(confirmDelete);
+      setIncidents(prev => prev.filter(i => i.id !== confirmDelete));
       setView("dashboard");
-    } catch (err) {
-      console.error("Failed to delete incident:", err);
+      setConfirmDelete(null);
+      toast("Incident deleted", "success");
+    } catch (err: any) {
+      toast(err.message || "Failed to delete incident", "error");
+      setConfirmDelete(null);
     }
-  }, []);
+  }, [confirmDelete, toast]);
 
   const handleEditIncident = useCallback((inc: Incident) => {
     setEditingIncident(inc);
@@ -159,6 +170,7 @@ export default function App() {
     "incident-detail":  selectedIncident?.code || "Incident Details",
     "reports":          "Reports & Statistics",
     "staff-management": "Staff Management",
+    "map":             "Station Map",
   };
 
   if (loading) return <LoaderFallback />;
@@ -168,7 +180,6 @@ export default function App() {
   const bottomPad = isMobile ? 72 : 0;
 
   return (
-    <ThemeProvider>
     <div dir="ltr" style={{ background: "var(--background)", minHeight: "100vh", fontFamily: FONT_SANS }}>
       <style>{`
         ::-webkit-scrollbar { width: 4px; }
@@ -217,14 +228,39 @@ export default function App() {
             {view === "new-incident" && <NewIncidentForm onSubmit={handleNewIncident} onUpdate={handleUpdateIncident} editIncident={editingIncident} />}
             {view === "incident-detail" && selectedIncident && (
               <IncidentDetail incident={selectedIncident} onBack={() => { setView("dashboard"); setSelectedId(null); }}
-                onEdit={() => handleEditIncident(selectedIncident)} onDelete={() => handleDeleteIncident(selectedIncident.id)} />
+                onEdit={() => handleEditIncident(selectedIncident)} onDelete={() => setConfirmDelete(selectedIncident.id)} />
             )}
             {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
             {view === "staff-management" && <StaffManagement staffList={staffList} onUpdateStaff={handleUpdateStaff} onBack={() => setView("dashboard")} />}
+            {view === "map" && (
+              <StationMap
+                incidents={incidents}
+                onStationClick={() => setView("dashboard")}
+              />
+            )}
           </Suspense>
         </div>
       </main>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete Incident"
+        message="Are you sure you want to delete this incident? This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <AppInner />
+      </ToastProvider>
     </ThemeProvider>
   );
 }
