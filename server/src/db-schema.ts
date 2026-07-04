@@ -40,6 +40,24 @@ export async function initDatabase() {
   `);
 
   await query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_job_number VARCHAR(20) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      type VARCHAR(20) NOT NULL DEFAULT 'info',
+      incident_id UUID,
+      incident_code VARCHAR(50),
+      read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_job_number, read);
+  `).catch(() => {});
+
+  await query(`
     CREATE TABLE IF NOT EXISTS audit_log (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       action VARCHAR(50) NOT NULL,
@@ -53,9 +71,12 @@ export async function initDatabase() {
     );
   `);
 
-  await query(`
-    ALTER TABLE incidents ALTER COLUMN code TYPE VARCHAR(50);
-  `).catch(() => {});
+  try {
+    await query(`ALTER TABLE incidents ALTER COLUMN code TYPE VARCHAR(50);`);
+    console.log("[DB] Altered code column to VARCHAR(50)");
+  } catch (e) {
+    console.log("[DB] code column alter skipped (may already be VARCHAR(50)):", (e as Error).message);
+  }
 
   await query(`
     CREATE INDEX IF NOT EXISTS idx_incidents_station ON incidents(station);

@@ -192,7 +192,7 @@ function AppInner() {
 
       <Sidebar view={view} setView={navigate} incidents={incidents} open={!isMobile && sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {isMobile && <BottomNav view={view} setView={navigate} activeCount={activeCount} />}
-      <TopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} incidents={incidents} mobile={isMobile} />
+      <TopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} incidents={incidents} mobile={isMobile} onNavigateToIncident={handleSelectIncident} />
 
       <main className="transition-all duration-300" style={{ marginLeft: mainOffset, paddingTop: 44, paddingBottom: bottomPad }}>
         <div className="sticky top-0 z-20 px-3 sm:px-5 py-2.5 border-b flex items-center justify-between" style={{ background: "color-mix(in srgb, var(--background) 95%, transparent)", borderColor: "var(--border)", backdropFilter: "blur(8px)" }}>

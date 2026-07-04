@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { query } from "../db";
 import { authMiddleware } from "../middleware/auth";
 import { auditLogging } from "../middleware/audit";
+import { createNotification } from "./notifications";
 
 const router = Router();
 
@@ -99,7 +100,40 @@ router.post("/", auditLogging("CREATE", "incident"), async (req: Request, res: R
         body.impact ? JSON.stringify(body.impact) : null,
       ]
     );
-    res.status(201).json(rowToIncident(result.rows[0]));
+
+    const newInc = result.rows[0];
+    const severityLabel = newInc.severity ? `[${newInc.severity}] ` : "";
+
+    // Notify all OCC staff
+    const occStaff = await query("SELECT job_number FROM staff WHERE role = 'OCC Operator'");
+    for (const s of occStaff.rows) {
+      await createNotification({
+        userJobNumber: s.job_number,
+        title: "New Incident",
+        message: `${severityLabel}${newInc.incident_type} at ${newInc.station} reported by ${user.jobNumber}`,
+        type: newInc.severity === "CRITICAL" ? "critical" : "info",
+        incidentId: newInc.id,
+        incidentCode: newInc.code,
+      });
+    }
+
+    // Notify station staff at the incident station
+    const stationStaff = await query(
+      "SELECT job_number FROM staff WHERE station = $1 AND job_number != $2",
+      [newInc.station, user.jobNumber]
+    );
+    for (const s of stationStaff.rows) {
+      await createNotification({
+        userJobNumber: s.job_number,
+        title: "New Incident at Your Station",
+        message: `${severityLabel}${newInc.incident_type} at ${newInc.station}`,
+        type: "info",
+        incidentId: newInc.id,
+        incidentCode: newInc.code,
+      });
+    }
+
+    res.status(201).json(rowToIncident(newInc));
   } catch (err) {
     console.error("[INCIDENTS] POST error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -140,7 +174,27 @@ router.put("/:id", auditLogging("UPDATE", "incident"), async (req: Request, res:
         req.params.id,
       ]
     );
-    res.json(rowToIncident(result.rows[0]));
+
+    const updated = result.rows[0];
+    if (body.status && body.status !== inc.status) {
+      const statusMsg = body.status === "RESOLVED" ? "resolved" : "updated to " + body.status;
+      const stationStaff2 = await query(
+        "SELECT job_number FROM staff WHERE station = $1 OR role = 'OCC Operator'",
+        [updated.station]
+      );
+      for (const s of stationStaff2.rows) {
+        await createNotification({
+          userJobNumber: s.job_number,
+          title: `Incident ${statusMsg}`,
+          message: `${updated.code} at ${updated.station} ${statusMsg} by ${user.jobNumber}`,
+          type: body.status === "RESOLVED" ? "success" : "info",
+          incidentId: updated.id,
+          incidentCode: updated.code,
+        });
+      }
+    }
+
+    res.json(rowToIncident(updated));
   } catch (err) {
     console.error("[INCIDENTS] PUT error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -158,7 +212,23 @@ router.delete("/:id", auditLogging("DELETE", "incident"), async (req: Request, r
     if (user.role !== "OCC Operator" && user.role !== "Administrator" && existing.rows[0].reported_by !== user.jobNumber) {
       return res.status(403).json({ error: "Forbidden" });
     }
+    const deletedCode = existing.rows[0].code;
     await query("DELETE FROM incidents WHERE id = $1", [req.params.id]);
+
+    const stationStaff3 = await query(
+      "SELECT job_number FROM staff WHERE station = $1 OR role = 'OCC Operator'",
+      [existing.rows[0].station]
+    );
+    for (const s of stationStaff3.rows) {
+      await createNotification({
+        userJobNumber: s.job_number,
+        title: "Incident Deleted",
+        message: `${deletedCode} at ${existing.rows[0].station} deleted by ${user.jobNumber}`,
+        type: "warning",
+        incidentCode: deletedCode,
+      });
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("[INCIDENTS] DELETE error:", err);

@@ -15,6 +15,7 @@ import authRoutes from "./routes/auth";
 import incidentRoutes from "./routes/incidents";
 import staffRoutes from "./routes/staff";
 import auditRoutes from "./routes/audit";
+import notificationRoutes from "./routes/notifications";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001");
@@ -42,6 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Force re-seed (truncates existing data)
 app.post("/api/seed", async (_req, res) => {

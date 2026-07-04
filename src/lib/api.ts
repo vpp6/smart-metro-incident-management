@@ -109,4 +109,21 @@ export const api = {
   async deleteStaff(id: string) {
     return request<any>(`/api/staff/${id}`, { method: "DELETE" });
   },
+
+  // Notifications
+  async getNotifications() {
+    return request<any[]>("/api/notifications");
+  },
+
+  async getUnreadCount() {
+    return request<{ count: number }>("/api/notifications/unread-count");
+  },
+
+  async markNotificationRead(id: string) {
+    return request<any>(`/api/notifications/${id}/read`, { method: "PUT" });
+  },
+
+  async markAllNotificationsRead() {
+    return request<any>("/api/notifications/read-all", { method: "PUT" });
+  },
 };
