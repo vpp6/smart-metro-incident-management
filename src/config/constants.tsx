@@ -38,9 +38,8 @@ export interface StationInfo { name: string; line: "blue" | "red"; color: string
 
 export const STATIONS: StationInfo[] = [
   { name: "SAB", line: "blue", color: "#3b82f6" },
-  { name: "Al-Masar", line: "blue", color: "#3b82f6" },
+  { name: "FAFD", line: "blue", color: "#3b82f6" },
   { name: "Dr. Suliman Al-Habib", line: "blue", color: "#3b82f6" },
-  { name: "Financial Center", line: "blue", color: "#3b82f6" },
   { name: "Al-Murooj", line: "blue", color: "#3b82f6" },
   { name: "King Fahd District", line: "blue", color: "#3b82f6" },
   { name: "King Fahd District 2", line: "blue", color: "#3b82f6" },
