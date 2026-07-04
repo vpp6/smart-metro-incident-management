@@ -11,6 +11,10 @@ function isAdmin(user: { role: string }) {
   return user.role === "OCC Operator" || user.role === "Administrator";
 }
 
+function canModifyStaff(user: { role: string }) {
+  return user.role === "OCC Operator";
+}
+
 // GET /api/staff
 router.get("/", async (req: Request, res: Response) => {
   if (!isAdmin(req.user!)) {
@@ -27,8 +31,8 @@ router.get("/", async (req: Request, res: Response) => {
 
 // POST /api/staff
 router.post("/", auditLogging("CREATE", "staff"), async (req: Request, res: Response) => {
-  if (!isAdmin(req.user!)) {
-    return res.status(403).json({ error: "Forbidden: admins only" });
+  if (!canModifyStaff(req.user!)) {
+    return res.status(403).json({ error: "Forbidden: OCC operators only" });
   }
   const { jobNumber, name, password, role, station } = req.body;
   if (!jobNumber || !name || !password || !role || !station) {
@@ -53,8 +57,8 @@ router.post("/", auditLogging("CREATE", "staff"), async (req: Request, res: Resp
 
 // DELETE /api/staff/:id
 router.delete("/:id", auditLogging("DELETE", "staff"), async (req: Request, res: Response) => {
-  if (!isAdmin(req.user!)) {
-    return res.status(403).json({ error: "Forbidden: admins only" });
+  if (!canModifyStaff(req.user!)) {
+    return res.status(403).json({ error: "Forbidden: OCC operators only" });
   }
   try {
     const result = await query("DELETE FROM staff WHERE id = $1 RETURNING id", [req.params.id]);

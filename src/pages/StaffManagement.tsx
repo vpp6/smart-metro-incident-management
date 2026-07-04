@@ -8,9 +8,10 @@ interface Props {
   staffList: StaffUser[];
   onUpdateStaff: (list: StaffUser[]) => void;
   onBack: () => void;
+  userRole?: string;
 }
 
-export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
+export function StaffManagement({ staffList, onUpdateStaff, onBack, userRole }: Props) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,14 +77,16 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
             className="w-full pl-7 pr-3 py-2 rounded text-[12px] outline-none font-mono"
             style={{ background: "var(--card)", border: "1px solid rgba(100,140,200,0.1)", color: "var(--foreground)" }} />
         </div>
-        <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded text-[11px] transition-all whitespace-nowrap"
-          style={{ background: "rgba(var(--primary-rgb), 0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "var(--primary)" }}>
-          <Plus size={13} /> Add Staff
-        </button>
+        {userRole !== "Administrator" && (
+          <button onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded text-[11px] transition-all whitespace-nowrap"
+            style={{ background: "rgba(var(--primary-rgb), 0.12)", border: "1px solid rgba(245,158,11,0.3)", color: "var(--primary)" }}>
+            <Plus size={13} /> Add Staff
+          </button>
+        )}
       </div>
 
-      {showForm && (
+      {showForm && userRole !== "Administrator" && (
         <div className="rounded border p-4 space-y-3" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>New Staff Member</p>
           {error && <p className="text-[11px]" style={{ color: "var(--destructive)" }}>{error}</p>}
@@ -145,14 +148,17 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(100,140,200,0.08)" }}>
-                {["Job Number", "Name", "Role", "Station", ""].map(h => (
-                  <th key={h} className="py-2.5 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>{h}</th>
-                ))}
+                {(() => {
+                  const headers = userRole !== "Administrator" ? ["Job Number", "Name", "Role", "Station", ""] : ["Job Number", "Name", "Role", "Station"];
+                  return headers.map(h => (
+                    <th key={h} className="py-2.5 px-3 text-right text-[9px] font-mono uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>{h}</th>
+                  ));
+                })()}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-[11px] font-mono" style={{ color: "var(--muted-foreground)" }}>No staff found</td></tr>
+                <tr><td colSpan={userRole !== "Administrator" ? 5 : 4} className="py-8 text-center text-[11px] font-mono" style={{ color: "var(--muted-foreground)" }}>No staff found</td></tr>
               )}
               {filtered.map(s => (
                 <tr key={s.id} className="border-b" style={{ borderColor: "var(--border)" }}>
@@ -164,11 +170,13 @@ export function StaffManagement({ staffList, onUpdateStaff, onBack }: Props) {
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: "var(--border)", color: "var(--secondary-foreground)" }}>{s.role}</span>
                   </td>
                   <td className="py-2.5 px-3 text-[11px] font-mono" style={{ color: "var(--muted-foreground)" }}>{s.station}</td>
-                  <td className="py-2.5 px-3">
-                    <button onClick={() => handleDelete(s.id)} className="p-1 rounded hover:bg-white/5 transition-colors" style={{ color: "var(--muted-foreground)" }}>
-                      <Trash2 size={12} />
-                    </button>
-                  </td>
+                  {userRole !== "Administrator" && (
+                    <td className="py-2.5 px-3">
+                      <button onClick={() => handleDelete(s.id)} className="p-1 rounded hover:bg-white/5 transition-colors" style={{ color: "var(--muted-foreground)" }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

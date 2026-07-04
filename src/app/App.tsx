@@ -231,7 +231,7 @@ function AppInner() {
                 onEdit={() => handleEditIncident(selectedIncident)} onDelete={() => setConfirmDelete(selectedIncident.id)} />
             )}
             {view === "reports" && <Reports incidents={incidents} onSelectIncident={handleSelectIncident} mobile={isMobile} />}
-            {view === "staff-management" && <StaffManagement staffList={staffList} onUpdateStaff={handleUpdateStaff} onBack={() => setView("dashboard")} />}
+            {view === "staff-management" && <StaffManagement staffList={staffList} onUpdateStaff={handleUpdateStaff} onBack={() => setView("dashboard")} userRole={user.role} />}
             {view === "map" && (
               <StationMap
                 incidents={incidents}
